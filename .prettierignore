@@ -1,0 +1,11 @@
+**/node_modules/
+**/package-lock.json
+**/.venv/
+**/__pycache__/
+**/dist/
+**/.pytest_cache/
+.architecture-work/
+.test-tmp*/
+realcenter-marketing-ai/campaigns/
+realcenter-marketing-ai/brand/
+graphify-out/

@@ -1,0 +1,19 @@
+{
+  "id": "A50",
+  "name": "Marketing Analyst + SEO",
+  "status": "planned",
+  "responsibilities": [
+    "Resultados e concorrentes",
+    "SEO e presença digital"
+  ],
+  "allowed_tools": [],
+  "restrictions": [
+    "no_sgcloud_write",
+    "no_price_lookup",
+    "no_publish",
+    "no_external_messages",
+    "no_ad_spend",
+    "no_fabricated_facts"
+  ]
+}
+

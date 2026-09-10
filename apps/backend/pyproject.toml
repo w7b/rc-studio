@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "realcenter-marketing-ai"
+version = "0.1.0"
+description = "Equipe de agentes de Marketing da Real Center"
+requires-python = ">=3.11"
+dependencies = ["openai-agents==0.22.1", "pydantic==2.13.5", "python-dotenv==1.2.3", "Pillow==12.1.0", "graphifyy==0.9.45"]
+
+[project.optional-dependencies]
+dev = ["pytest==9.1.1"]
+
+[project.scripts]
+realcenter-marketing = "realcenter_marketing.presentation.cli:main"
+realcenter-studio = "realcenter_marketing.presentation.http.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-q"

@@ -1,0 +1,27 @@
+name: Validate application
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/frontend/package-lock.json
+      - run: python -m pip install -e './apps/backend[dev]'
+      - run: npm ci
+        working-directory: apps/frontend
+      - run: npm run build
+        working-directory: apps/frontend
+      - run: python scripts/package_frontend.py
+      - run: python -m pytest
+      - run: python scripts/smoke.py
+      - run: docker build -t realcenter-studio:test .
+      - run: docker run --rm --network none --mount type=bind,source=${{ github.workspace }}/scripts/smoke.py,target=/tmp/smoke.py,readonly realcenter-studio:test python /tmp/smoke.py

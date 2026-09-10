@@ -1,0 +1,1 @@
+Agente planejado, não instanciado no MVP. Futuramente: Meta Ads, segmentação, hipóteses de testes e planejamento de tráfego. Publicação e gasto de mídia dependerão de fluxo explícito de autorização. Sem tools nesta fase.

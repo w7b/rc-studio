@@ -1,0 +1,120 @@
+{
+  "SocialPlan": {
+    "strategy": "Aquecer o interesse na sexta e convidar à visita no sábado, com conteúdo institucional enquanto produtos e ofertas não forem confirmados.",
+    "audience_hypothesis": "Pessoas da região interessadas em conhecer a Real Center; região e perfil a confirmar.",
+    "stories": [
+      {
+        "number": 1,
+        "objective": "Despertar interesse com uma pergunta.",
+        "visual": "Pergunta em destaque e espaço reservado para logo oficial."
+      },
+      {
+        "number": 2,
+        "objective": "Incentivar conversa sobre as necessidades do público.",
+        "visual": "Caixa de pergunta sobre o que a pessoa procura."
+      },
+      {
+        "number": 3,
+        "objective": "Convidar a planejar uma visita.",
+        "visual": "CTA legível; incluir endereço e horário somente após confirmação."
+      }
+    ],
+    "feed_suggestion": "Post institucional com convite para conhecer a Real Center neste final de semana.",
+    "reel_suggestion": "Roteiro proposto: fachada autorizada, detalhes da loja e convite final; captar após autorização local.",
+    "calendar": [
+      {
+        "timing": "Sexta-feira, horário a definir",
+        "format": "stories",
+        "objective": "Abrir conversa e despertar interesse."
+      },
+      {
+        "timing": "Sábado, após confirmar funcionamento",
+        "format": "feed",
+        "objective": "Convidar à visita."
+      }
+    ]
+  },
+  "CopyPack": {
+    "headline": "Seu final de semana pode começar na Real Center",
+    "cta": "Planeje sua visita à Real Center.",
+    "stories": [
+      {
+        "number": 1,
+        "text": "O que está nos seus planos para este final de semana?",
+        "cta": "Conte para a gente."
+      },
+      {
+        "number": 2,
+        "text": "Quer conhecer melhor a Real Center? Diga o que você procura.",
+        "cta": "Responda aqui."
+      },
+      {
+        "number": 3,
+        "text": "Inclua a Real Center nos seus planos.",
+        "cta": "Planeje sua visita à Real Center."
+      }
+    ],
+    "feed_caption": "Final de semana é tempo de fazer planos. Que tal incluir uma visita à Real Center? Conte para a gente o que você procura. Planeje sua visita à Real Center.",
+    "leaflet_copy": "Seu final de semana pode começar na Real Center. Planeje sua visita à Real Center.",
+    "whatsapp_draft": "Olá! Que tal incluir a Real Center nos seus planos para o final de semana? Conte o que você procura. Planeje sua visita à Real Center."
+  },
+  "CreativeBrief": {
+    "visual_direction": "Wireframe institucional com leitura clara. Aplicar identidade oficial somente quando o Brand Kit estiver preenchido.",
+    "leaflet_brief": "Encarte institucional: headline no topo, área central de imagem autorizada e CTA no rodapé. Sem grade de produtos ou ofertas até confirmação.",
+    "assets": [
+      {
+        "format": "stories",
+        "dimensions": "Proposta: 1080 × 1920 px",
+        "layout": "Uma mensagem por quadro com área de respiro.",
+        "hierarchy": [
+          "Pergunta ou mensagem do quadro",
+          "CTA",
+          "Logo oficial pendente"
+        ]
+      },
+      {
+        "format": "feed",
+        "dimensions": "Proposta: 1080 × 1350 px",
+        "layout": "Headline dominante e CTA no rodapé.",
+        "hierarchy": [
+          "Headline",
+          "Imagem autorizada pendente",
+          "CTA"
+        ]
+      },
+      {
+        "format": "leaflet",
+        "dimensions": "Proposta digital: 1080 × 1350 px; impressão a definir",
+        "layout": "Topo com headline, imagem central e rodapé com CTA.",
+        "hierarchy": [
+          "Headline",
+          "Imagem autorizada pendente",
+          "CTA",
+          "Dados da loja após confirmação"
+        ]
+      }
+    ],
+    "brand_pending": [
+      "Logo oficial",
+      "Paleta de cores",
+      "Tipografia",
+      "Fotografias autorizadas"
+    ]
+  },
+  "DirectorReview": {
+    "strategy": "Criar lembrança de marca e estimular interesse em uma visita por meio de Stories e Feed orgânicos.",
+    "concept": "A Real Center nos seus planos de final de semana.",
+    "assumptions": [
+      "Demonstração fixa de campanha institucional, sem oferta comercial.",
+      "Público regional é hipótese a validar."
+    ],
+    "pending_information": [
+      "Datas e horários de funcionamento",
+      "Endereço e canais oficiais",
+      "Público e segmento da loja",
+      "Brand Kit",
+      "Produtos ou ofertas, se desejados"
+    ],
+    "review_notes": "Estrutura demonstrativa coerente. Revisar fatos, identidade e calendário antes de produzir os materiais. Nenhuma arte foi renderizada."
+  }
+}

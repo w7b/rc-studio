@@ -1,0 +1,16 @@
+services:
+  studio:
+    build: .
+    ports:
+      - "127.0.0.1:8765:8765"
+    env_file:
+      - path: ./realcenter-marketing-ai/.env
+        required: false
+    volumes:
+      - ./realcenter-marketing-ai/campaigns:/app/realcenter-marketing-ai/campaigns
+      - ./realcenter-marketing-ai/brand:/app/realcenter-marketing-ai/brand:ro
+    stop_grace_period: 190s
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
