@@ -53,7 +53,15 @@ def load_policy(root):
 
 
 def load_brand(root):
-    files = sorted((root / 'brand').rglob('*.md'))
+    """Generation guidance only.
+
+    The Brand Kit is repeated in every agent's instructions, so a file that does not
+    steer generation is paid for once per agent on every request. READMEs document
+    folder mechanics and the quality checklist is a human review list run after the
+    art exists; neither belongs in the prompt.
+    """
+    files = sorted(path for path in (root / 'brand').rglob('*.md')
+                   if path.name.lower() not in {'readme.md', 'quality-checklist.md'})
     if not files:
         raise ValueError('Brand Kit ausente: crie os arquivos em brand/')
     return json.dumps({str(p.relative_to(root)): p.read_text(encoding='utf-8') for p in files}, ensure_ascii=False)
