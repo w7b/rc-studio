@@ -87,7 +87,7 @@ class RunJournal:
             self._write_usage(data)
 
     def record_image_usage(self, model, size='1024x1536', usage=None):
-        cost = image_cost(model) if size == '1024x1536' else None
+        cost = image_cost(model, size)
         with self._usage_lock:
             data = self._usage()
             image = data["image"]

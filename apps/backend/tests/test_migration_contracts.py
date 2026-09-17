@@ -55,7 +55,9 @@ def test_http_serves_configured_static_build_and_preserves_read_contracts(tmp_pa
     try:
         assert urlopen(base + '/').read() == b'<html>studio</html>'
         config = json.load(urlopen(base + '/api/config'))
-        assert set(config) == {'token', 'configured', 'model', 'image_model'}
+        assert set(config) == {'token', 'configured', 'model', 'image_model',
+                               'models', 'image_models'}
+        assert [option['id'] for option in config['image_models']] == ['openai:gpt-image-2', 'nvidia:black-forest-labs/flux.1-dev']
         assert json.load(urlopen(base + '/api/runs')) == {'runs': [], 'active_id': None}
         assert json.load(urlopen(base + '/api/media')) == []
         assert len(json.load(urlopen(base + '/api/formats'))) == 6

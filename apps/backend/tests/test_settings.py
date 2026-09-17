@@ -34,8 +34,9 @@ def test_live_provider_is_inherited_by_all_specialists(settings, demo, monkeypat
             seen_models.append(model_name)
             return demo
 
-    def provider_factory(*, api_key):
-        assert api_key == "fixture-secret"
+    def provider_factory(*, openai_client, use_responses=None):
+        # The runtime now builds the client itself, so each run owns its connection pool.
+        assert openai_client.api_key == "fixture-secret"
         return OfflineProvider()
 
     monkeypatch.setattr(workflow, "OpenAIProvider", provider_factory)

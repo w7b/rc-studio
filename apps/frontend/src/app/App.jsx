@@ -259,6 +259,8 @@ export default function App() {
                   products={media.filter((m) => m.product)}
                   busy={!!active || !connected || !config}
                   configured={config?.configured}
+                  models={config?.models || []}
+                  imageModels={config?.image_models || []}
                   onSubmit={create}
                   onAssist={(payload) => post('/api/brief-assist', payload, config.token)}
                 />
@@ -349,7 +351,10 @@ export default function App() {
                             {run.events[0]
                               ? new Date(run.events[0].time).toLocaleString('pt-BR')
                               : run.id}{' '}
-                            · {run.events[0]?.mode === 'demo' ? 'Demonstração' : 'Geração com IA'}
+                            ·{' '}
+                            {run.events[0]?.mode === 'demo'
+                              ? 'Demonstração'
+                              : run.events[0]?.model?.split(':').pop() || 'Geração com IA'}
                           </p>
                         </div>
                         <span className="badge">

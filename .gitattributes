@@ -1,0 +1,14 @@
+# One line ending in the repository. Without this, every Windows checkout rewrites
+# CRLF into tracked files and git reports whole files as changed.
+* text=auto eol=lf
+
+# Binary assets must never be normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.woff binary
+*.woff2 binary

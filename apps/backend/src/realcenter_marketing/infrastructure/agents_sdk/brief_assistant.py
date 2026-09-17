@@ -3,7 +3,9 @@ from realcenter_marketing.application.commands import AssistRequest, BriefSugges
 import asyncio
 from typing import Annotated
 
-from agents import OpenAIProvider, RunConfig, Runner
+from agents import RunConfig, Runner
+
+from realcenter_marketing.infrastructure.agents_sdk.runtime import build_provider, close_provider
 from pydantic import Field, StringConstraints
 
 from realcenter_marketing.infrastructure.agents_sdk.team_factory import build_team
@@ -32,8 +34,14 @@ async def improve_brief(request, settings, journal, *, model=None):
 
     assistant = creative.clone(instructions=instructions, output_type=BriefSuggestion)
     config = RunConfig(tracing_disabled=True)
+    provider = None
     if model is None:
-        config.model_provider = OpenAIProvider(api_key=settings.api_key.get_secret_value())
-    async with asyncio.timeout(min(settings.timeout_seconds, 90)):
-        result = await Runner.run(assistant, brief.model_dump_json(), max_turns=2, run_config=config)
+        # Its own client too: otherwise this consultation poisons the next campaign's pool.
+        provider = build_provider(settings)
+        config.model_provider = provider
+    try:
+        async with asyncio.timeout(min(settings.timeout_seconds, 90)):
+            result = await Runner.run(assistant, brief.model_dump_json(), max_turns=2, run_config=config)
+    finally:
+        await close_provider(provider)
     return BriefSuggestion.model_validate(result.final_output)

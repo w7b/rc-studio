@@ -19,7 +19,8 @@ class AgentRuntime(Protocol):
 
 
 class CampaignExecutor(Protocol):
-    async def __call__(self, brief: CampaignBrief, mode: str, journal: Journal) -> Campaign: ...
+    async def __call__(self, brief: CampaignBrief, mode: str, journal: Journal,
+                       model_id: str | None = None) -> Campaign: ...
 
 
 class CampaignRepository(Protocol):

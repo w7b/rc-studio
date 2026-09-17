@@ -4,7 +4,16 @@ import BriefAssistant from '../briefing/BriefAssistant.jsx';
 import UploadField from '../../shared/components/UploadField.jsx';
 import { fileData, api } from '../../shared/api/client.js';
 
-export default function CampaignForm({ products, busy, configured, onSubmit, onAssist, initial }) {
+export default function CampaignForm({
+  products,
+  busy,
+  configured,
+  models = [],
+  imageModels = [],
+  onSubmit,
+  onAssist,
+  initial,
+}) {
   const [formats, setFormats] = useState([]);
   const [publication, setPublication] = useState(
     initial?.publication || { kind: 'feed', preset: 'feed_portrait', slides: 1 }
@@ -25,7 +34,21 @@ export default function CampaignForm({ products, busy, configured, onSubmit, onA
     [facts, setFacts] = useState(
       initial?.confirmed_facts?.join('\n') || 'Produto: \nPreço: R$\nTítulo em destaque: '
     ),
-    [mode, setMode] = useState(initial?.mode || 'live');
+    [selection, setSelection] = useState(
+      initial?.mode === 'demo' ? 'demo' : initial?.model_id || ''
+    );
+  const mode = selection === 'demo' ? 'demo' : 'live';
+  const [imageModel, setImageModel] = useState(initial?.image_model_id || '');
+  useEffect(() => {
+    if (!selection && models.length)
+      setSelection(models.find((m) => m.available && m.delegates !== false)?.id || models[0].id);
+  }, [models, selection]);
+  useEffect(() => {
+    if (!imageModel && imageModels.length) setImageModel(imageModels[0].id);
+  }, [imageModels, imageModel]);
+  const chosenImage = imageModels.find((m) => m.id === imageModel);
+  // FLUX draws at most 1344 px per side, so only the square export fits it.
+  const squareOnly = chosenImage?.provider === 'nvidia' && publication.preset !== 'feed_square';
   const [image, setImage] = useState(initial?.generate_image ?? true),
     [product, setProduct] = useState(''),
     [photo, setPhoto] = useState(initial?.photo || null),
@@ -46,6 +69,8 @@ export default function CampaignForm({ products, busy, configured, onSubmit, onA
           .map((x) => x.trim())
           .filter(Boolean),
         mode,
+        model_id: mode === 'demo' ? null : selection || null,
+        image_model_id: mode === 'demo' ? null : imageModel || null,
         publication,
         generate_image: mode === 'live' && image,
         product_id: photo ? null : product || null,
@@ -92,7 +117,10 @@ export default function CampaignForm({ products, busy, configured, onSubmit, onA
         busy={busy || sending}
         configured={configured}
         onAssist={onAssist}
-        onApply={setRequest}
+        onApply={(improved, confirmed) => {
+          setRequest(improved);
+          if (confirmed != null) setFacts(confirmed);
+        }}
         onBusy={setHelping}
       />
       <label className="block">
@@ -211,13 +239,42 @@ export default function CampaignForm({ products, busy, configured, onSubmit, onA
           </span>
         </label>
         <label className="mode-label">
-          <span className="sr-only">Modo de execução</span>
-          <select value={mode} onChange={(e) => setMode(e.target.value)}>
-            <option value="live">Geração com IA</option>
+          <span className="sr-only">Modelo de execução</span>
+          <select value={selection} onChange={(e) => setSelection(e.target.value)}>
+            <optgroup label="Modelos disponíveis">
+              {models.map((m) => (
+                <option key={m.id} value={m.id} disabled={!m.available || m.delegates === false}>
+                  {m.label}
+                  {!m.available ? ' · sem chave' : m.delegates === false ? ' · não delega' : ''}
+                </option>
+              ))}
+            </optgroup>
             <option value="demo">Demonstração sem API</option>
           </select>
         </label>
       </div>
+      {mode === 'live' && image && imageModels.length > 1 && (
+        <label className="block">
+          <span className="field-label">Modelo da arte</span>
+          <select value={imageModel} onChange={(e) => setImageModel(e.target.value)}>
+            {imageModels.map((m) => (
+              <option key={m.id} value={m.id} disabled={!m.available}>
+                {m.label}
+                {m.available ? '' : ' · sem chave'}
+              </option>
+            ))}
+          </select>
+          {chosenImage?.note && (
+            <span className="muted block text-xs mt-1">{chosenImage.note}</span>
+          )}
+        </label>
+      )}
+      {squareOnly && (
+        <p className="error">
+          {chosenImage.label} só desenha até 1344 px por lado. Escolha o formato Feed quadrado
+          (1080x1080) ou volte para o modelo padrão.
+        </p>
+      )}
       {mode === 'demo' ? (
         <p className="hint">
           <FlaskConical size={16} /> Respostas fixas para testar os agentes. Sem geração de imagem
@@ -229,8 +286,11 @@ export default function CampaignForm({ products, busy, configured, onSubmit, onA
           como rascunho.
         </p>
       )}
-      {!configured && mode === 'live' && (
-        <p className="error">Configure OPENAI_API_KEY e OPENAI_MODEL no .env antes de gerar.</p>
+      {mode === 'live' && !models.find((m) => m.id === selection)?.available && (
+        <p className="error">
+          O modelo selecionado não tem chave configurada no .env. Escolha outro modelo ou preencha a
+          chave do provedor.
+        </p>
       )}
       {error && (
         <p className="error" role="alert">
@@ -239,7 +299,14 @@ export default function CampaignForm({ products, busy, configured, onSubmit, onA
       )}
       <button
         className="button primary w-full justify-center"
-        disabled={sending || helping || busy || !formats.length || (mode === 'live' && !configured)}
+        disabled={
+          sending ||
+          helping ||
+          busy ||
+          !formats.length ||
+          squareOnly ||
+          (mode === 'live' && !models.find((m) => m.id === selection)?.available)
+        }
       >
         {sending
           ? 'Iniciando…'

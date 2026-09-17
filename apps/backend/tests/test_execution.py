@@ -51,7 +51,7 @@ def test_failed_image_setup_releases_execution_slot(settings, demo, root, tmp_pa
     journal = RunJournal(root / 'campaigns/runs' / run_id)
     journal.save('campaign', campaign)
     service = CampaignService(root)
-    monkeypatch.setattr(service, 'validate_live', lambda: None)
+    monkeypatch.setattr(service, 'validate_live', lambda *_: None)
     def unavailable(*args):
         raise OSError('unavailable')
     monkeypatch.setattr(service.repository, 'resume', unavailable)

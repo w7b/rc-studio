@@ -3,6 +3,7 @@ import traceback
 from pathlib import Path
 """Diagnostics without prompts, model output, secrets, or exception payloads."""
 from pydantic import ValidationError
+from realcenter_marketing.application.errors import ImageRequestLimitError
 
 RULES = {
     'missing': 'Campo obrigatório ausente.',
@@ -42,6 +43,7 @@ def report(run_id, events, usage, outputs):
             'details_available': bool(validation or last.get('stack')),
             'stack': last.get('stack', []), 'exception_chain': last.get('exception_chain', []),
             'request_id': last.get('request_id'), 'http_status': last.get('http_status'),
+            'provider_error': last.get('provider_error'), 'request_limit': last.get('request_limit'),
             'response_id': response.get('response_id'), 'response_summary': response.get('summary'),
             'model': (usage or {}).get('text', {}).get('model'), 'usage': usage,
             'saved_outputs': saved, 'failure_events': failures,
@@ -61,6 +63,27 @@ def error_details(exc):
     status = getattr(exc, 'status_code', None)
     if isinstance(status, int):
         details['http_status'] = status
+    if isinstance(exc, ImageRequestLimitError):
+        details['request_limit'] = {'param': exc.param, 'actual': exc.actual, 'limit': exc.limit}
+    # Allow only known machine identifiers. Provider messages and arbitrary body
+    # strings can echo prompts or secrets and must not be copied into diagnostics.
+    body = getattr(exc, 'body', None)
+    if isinstance(body, dict):
+        error = body.get('error', body)
+        if isinstance(error, dict):
+            allowed = {
+                'param': {'prompt', 'image', 'images', 'model', 'size', 'quality', 'n',
+                          'output_format', 'input_fidelity', 'background', 'mask'},
+                'code': {'string_above_max_length', 'string_too_long', 'invalid_value',
+                         'invalid_parameter', 'invalid_image', 'invalid_image_format',
+                         'invalid_image_size', 'model_not_found', 'unsupported_parameter',
+                         'unsupported_value', 'context_length_exceeded', 'content_policy_violation'},
+                'type': {'invalid_request_error', 'image_generation_user_error'},
+            }
+            identifiers = {key: value for key, values in allowed.items()
+                           if isinstance(value := error.get(key), str) and value in values}
+            if identifiers:
+                details['provider_error'] = identifiers
     cause = exc
     seen = set()
     while cause is not None and id(cause) not in seen:

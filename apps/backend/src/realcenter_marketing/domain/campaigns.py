@@ -16,6 +16,9 @@ class CampaignBrief(StructuredModel):
     request: Text
     confirmed_facts: list[Text] = Field(default_factory=list)
     publication: Publication = Field(default_factory=Publication)
+    # The Brand Kit compares a piece against its own family and forbids carrying a
+    # drink explosion into a notice, so style references are filtered by this.
+    family: Literal['produto', 'institucional'] = 'produto'
 
 
 class StoryPlan(StructuredModel):

@@ -60,7 +60,7 @@ def test_revision_upload_is_scoped_to_one_request_and_keeps_original(settings, d
     base=next(m['id'] for m in media_catalog(tmp_path).values() if m['name']=='feed-original.png')
     service=CampaignService(tmp_path)
     calls=[]
-    def fake(*args):
+    def fake(*args, **kwargs):
         calls.append(args[-1])
         if args[-1]: assert args[-1].read_bytes()==data.getvalue()
     monkeypatch.setattr(service,'_image',fake)

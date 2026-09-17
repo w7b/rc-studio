@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Sparkles, LoaderCircle, Check, X } from 'lucide-react';
+import { Sparkles, LoaderCircle, Check, X, HelpCircle } from 'lucide-react';
+
+/** An answered question becomes a confirmed fact: the same channel the agents already
+ *  treat as authoritative, so the next pass fills the gap instead of inventing it. */
+function asFact(question, answer) {
+  const clean = question.trim();
+  return `${clean}${/[?:.]$/.test(clean) ? '' : ':'} ${answer.trim()}`;
+}
 
 export default function BriefAssistant({
   request,
@@ -15,24 +22,33 @@ export default function BriefAssistant({
     [result, setResult] = useState(null),
     [error, setError] = useState('');
   const [original, setOriginal] = useState(null);
+  // Answers typed in this round, and every answer confirmed so far.
+  const [answers, setAnswers] = useState({});
+  const [extra, setExtra] = useState([]);
   useEffect(() => {
     if (result && dialog.current && !dialog.current.open) dialog.current.showModal();
   }, [result]);
   const changed = original && (original.request !== request || original.facts !== facts);
-  async function assist() {
+  const baseFacts = facts
+    .split('\n')
+    .map((value) => value.trim())
+    .filter(Boolean);
+
+  async function assist(extraFacts, { fresh } = {}) {
     setError('');
-    setResult(null);
+    if (fresh) {
+      setResult(null);
+      setExtra([]);
+      setOriginal({ request, facts });
+    }
+    setAnswers({});
     setLoading(true);
     onBusy(true);
-    setOriginal({ request, facts });
     try {
       setResult(
         await onAssist({
           request,
-          confirmed_facts: facts
-            .split('\n')
-            .map((value) => value.trim())
-            .filter(Boolean),
+          confirmed_facts: [...baseFacts, ...extraFacts].slice(0, 100),
         })
       );
     } catch (e) {
@@ -42,13 +58,25 @@ export default function BriefAssistant({
       onBusy(false);
     }
   }
+
+  const questions = result?.suggestion.questions || [];
+  const answered = questions
+    .map((question, index) => (answers[index]?.trim() ? asFact(question, answers[index]) : null))
+    .filter(Boolean);
+
+  function refine() {
+    const merged = [...extra, ...answered];
+    setExtra(merged);
+    assist(merged);
+  }
+
   return (
     <div className="space-y-3">
       <button
         type="button"
         className="button small"
         disabled={loading || busy || !configured || !request.trim()}
-        onClick={assist}
+        onClick={() => assist([], { fresh: true })}
       >
         {loading ? <LoaderCircle size={15} className="animate-spin" /> : <Sparkles size={15} />}{' '}
         {loading ? 'Creative Producer está revisando…' : 'Melhorar briefing com Creative Producer'}
@@ -95,14 +123,63 @@ export default function BriefAssistant({
               </ul>
             </div>
           )}
-          {result.suggestion.questions.length > 0 && (
+          {extra.length > 0 && (
             <div>
-              <strong className="text-sm">Ainda vale esclarecer</strong>
+              <strong className="text-sm">Respostas já registradas</strong>
               <ul className="list-disc pl-5 mt-2 text-sm muted space-y-1">
-                {result.suggestion.questions.map((text, index) => (
+                {extra.map((text, index) => (
                   <li key={index}>{text}</li>
                 ))}
               </ul>
+            </div>
+          )}
+          {questions.length > 0 && (
+            <div className="space-y-3">
+              <div>
+                <strong className="text-sm">Ainda vale esclarecer</strong>
+                <p className="muted text-xs mt-1">
+                  Responda o que souber. Cada resposta entra como informação confirmada e o Creative
+                  Producer reescreve o briefing sem essa lacuna. Deixe em branco o que ainda não
+                  estiver definido — nada é inventado.
+                </p>
+              </div>
+              {questions.map((question, index) => (
+                <label className="block nested" key={index}>
+                  <span className="field-label flex items-start gap-2">
+                    <HelpCircle size={14} className="shrink-0 mt-[3px]" />
+                    {question}
+                  </span>
+                  <input
+                    type="text"
+                    maxLength={1000}
+                    value={answers[index] || ''}
+                    placeholder="Sua resposta"
+                    disabled={loading}
+                    onChange={(e) => setAnswers({ ...answers, [index]: e.target.value })}
+                    onKeyDown={(e) => {
+                      // This dialog lives inside the campaign form; Enter must not submit it.
+                      if (e.key !== 'Enter') return;
+                      e.preventDefault();
+                      if (answered.length && !changed) refine();
+                    }}
+                  />
+                </label>
+              ))}
+              <button
+                type="button"
+                className="button small"
+                disabled={loading || busy || !answered.length || !!changed}
+                onClick={refine}
+              >
+                {loading ? (
+                  <LoaderCircle size={15} className="animate-spin" />
+                ) : (
+                  <Sparkles size={15} />
+                )}{' '}
+                {loading
+                  ? 'Reescrevendo com suas respostas…'
+                  : `Responder e revisar (${answered.length})`}
+              </button>
             </div>
           )}
           {result.usage && (
@@ -123,13 +200,19 @@ export default function BriefAssistant({
             <button
               type="button"
               className="button primary small"
-              disabled={busy || !!changed}
+              disabled={busy || loading || !!changed}
               onClick={() => {
-                onApply(result.suggestion.improved_request);
+                onApply(
+                  result.suggestion.improved_request,
+                  [...baseFacts, ...extra, ...answered].join('\n')
+                );
                 setResult(null);
               }}
             >
               <Check size={15} /> Aplicar sugestão
+              {extra.length + answered.length > 0
+                ? ` e ${extra.length + answered.length} informação(ões)`
+                : ''}
             </button>
             <button type="button" className="button small" onClick={() => setResult(null)}>
               <X size={15} /> Descartar

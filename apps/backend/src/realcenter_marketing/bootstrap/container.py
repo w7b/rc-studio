@@ -4,6 +4,7 @@ from realcenter_marketing.application.queries import StudioQueries
 from realcenter_marketing.infrastructure.queries import LocalStudioQueries
 from realcenter_marketing.infrastructure.system_catalog import SystemCatalog
 from realcenter_marketing.infrastructure.process_lease import ProcessLease
+from .model_catalog import image_models, text_models
 from .paths import AppPaths
 from .services import CampaignService
 from .settings import Settings
@@ -19,8 +20,12 @@ class Container:
 
     def public_config(self):
         settings = Settings.load(self.paths.data_root)
-        return {'configured': bool(settings.model and settings.api_key.get_secret_value()),
-                'model': settings.model, 'image_model': settings.image_model}
+        text, images = text_models(settings), image_models(settings)
+        # 'configured' stays a single yes/no for the form; the lists drive the picker.
+        return {'configured': any(settings.has(option) for option in text),
+                'model': settings.model, 'image_model': settings.image_model,
+                'models': [option.public(settings.has(option)) for option in text],
+                'image_models': [option.public(settings.has(option)) for option in images]}
 
     def close(self):
         try:

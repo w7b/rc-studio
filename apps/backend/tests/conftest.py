@@ -16,6 +16,9 @@ def root(tmp_path):
     for name in ('brand.md', 'colors.md', 'typography.md', 'visual-guidelines.md'):
         (brand / name).write_text('Brand Kit de teste. Informações comerciais pendentes.', encoding='utf-8')
     Image.new('RGB', (8, 8), 'white').save(brand / 'references' / 'fixture.png')
+    # Style references are filtered by family, so the fixture declares its own.
+    (brand / 'references' / 'families.json').write_text(
+        '{"files": {"fixture.png": "produto"}}', encoding='utf-8')
     import shutil
     from realcenter_marketing.infrastructure.resources import resources_root, ROLE_FOLDERS
     resources = resources_root()

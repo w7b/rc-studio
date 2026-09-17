@@ -27,8 +27,10 @@ class Team:
 
 
 
-def build_team(settings, model=None, *, journal=None, brief=None) -> Team:
+def build_team(settings, model=None, *, model_name=None, journal=None, brief=None) -> Team:
     root = settings.project_root
+    # The selected model names every agent and every usage record for the run.
+    selected = model_name or settings.model
     brand = load_brand(root)
     common = load_policy(root)
     specialists = {}
@@ -60,9 +62,9 @@ def build_team(settings, model=None, *, journal=None, brief=None) -> Team:
             ])
 
         return Agent(name=manifest.name, instructions=contextual_instructions,
-                     model=model if model is not None else settings.model,
+                     model=model if model is not None else selected,
                      tools=list(tools), output_type=DiagnosticOutputSchema(output_type, journal, manifest.name) if journal else output_type,
-                     hooks=ProgressHooks(journal, role, settings.model) if journal else None)
+                     hooks=ProgressHooks(journal, role, selected) if journal else None)
 
     tools = []
     specs = SPECIALIST_STEPS

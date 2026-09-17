@@ -125,7 +125,7 @@ Edite `realcenter-marketing-ai/.env`:
 | `OPENAI_MODEL` | Modelo de texto utilizado pelos agentes | Vazio |
 | `OPENAI_IMAGE_MODEL` | Modelo de geração de imagens | `gpt-image-2` |
 | `MAX_TURNS` | Limite de turnos do fluxo principal | `12` |
-| `REQUEST_TIMEOUT_SECONDS` | Timeout configurado, em segundos | `180` |
+| `REQUEST_TIMEOUT_SECONDS` | Timeout configurado, em segundos | `4800` (80 minutos) |
 
 O modo **demo** não exige chave nem faz chamadas ao provedor, mas utiliza respostas fixas e não gera imagens. A assistência de briefing usa a API mesmo quando o seletor de campanha está em demo.
 
@@ -267,7 +267,7 @@ No Docker, use caminhos internos do container e ajuste os volumes correspondente
 ### Limites atuais
 
 - Um processo escritor por diretório de dados e uma execução por vez. Encerre o servidor manual antes de iniciar o Docker com os mesmos dados.
-- O fechamento aguarda trabalho aceito. O Compose concede `190s`; ajuste `stop_grace_period` conforme os timeouts e a duração das etapas, principalmente em carrosséis.
+- O fechamento aguarda trabalho aceito. O Compose concede `4810s`; ajuste `stop_grace_period` conforme os timeouts e a duração das etapas, principalmente em carrosséis.
 - Interrupções abruptas preservam entregas e aparecem como interrompidas após reinício. Não há repetição automática de chamadas pagas.
 - Custos apresentados são estimativas; modelos sem preço conhecido mantêm o consumo sem inventar valores.
 - A configuração atual atende ao uso local. Enviar o código ao GitHub não disponibiliza automaticamente o backend na internet.

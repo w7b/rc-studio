@@ -13,7 +13,7 @@ from .ports import CampaignExecutor, CampaignRepository, ExecutionScheduler
 class CampaignService:
     def __init__(self, repository: CampaignRepository, scheduler: ExecutionScheduler,
                  execute: CampaignExecutor, improve_brief: Callable,
-                 images: ImageWorkflow, validate_live: Callable[[], None]):
+                 images: ImageWorkflow, validate_live: Callable[..., None]):
         self.repository, self.scheduler = repository, scheduler
         self.execute, self.improve_brief = execute, improve_brief
         self.images, self.validate_live = images, validate_live
@@ -73,9 +73,9 @@ class CampaignService:
 
     def start(self, request):
         brief = CampaignBrief(request=request.request, confirmed_facts=request.confirmed_facts,
-                              publication=request.publication)
+                              publication=request.publication, family=request.family)
         if request.mode == 'live':
-            self.validate_live()
+            self.validate_live(request)
         if request.mode == 'demo' and request.generate_image:
             raise ValueError('Demonstração não gera imagens com IA')
         inputs = self.repository.prepare_inputs(request)
@@ -84,7 +84,8 @@ class CampaignService:
             journal, product = self.repository.create_run(request, inputs)
             self.active_id = journal.directory.name
             journal.save('brief', brief)
-            journal.emit('run_started', mode=request.mode, image_requested=request.generate_image)
+            journal.emit('run_started', mode=request.mode, image_requested=request.generate_image,
+                         model=request.model_id, image_model=request.image_model_id)
             run_id = self.active_id
             self.scheduler.submit(lambda: self._work(request, brief, journal, product))
             return run_id
@@ -94,18 +95,20 @@ class CampaignService:
 
     def _work(self, request, brief, journal, product):
         try:
-            campaign = asyncio.run(self.execute(brief, request.mode, journal))
+            campaign = asyncio.run(self.execute(brief, request.mode, journal, request.model_id))
             journal.save('campaign', campaign)
             if request.generate_image:
-                self._image(campaign, journal, product)
+                self._image(campaign, journal, product, model_id=request.image_model_id)
             journal.emit('run_completed')
         except Exception as exc:
             journal.emit('run_failed', journal.current_agent, **error_details(exc), message=public_error(exc))
         finally:
             self._release()
 
-    def _image(self, campaign, journal, product, changes='', base_image=None, revision_reference=None):
-        return self.images.execute(campaign, journal, product, changes, base_image, revision_reference)
+    def _image(self, campaign, journal, product, changes='', base_image=None,
+               revision_reference=None, model_id=None):
+        return self.images.execute(campaign, journal, product, changes, base_image,
+                                   revision_reference, model_id=model_id)
 
     def image(self, run_id, request=None):
         request = request or ImageRequest()
@@ -120,7 +123,7 @@ class CampaignService:
         campaign = self.repository.campaign(run_id)
         if campaign.execution_mode != 'live':
             raise ValueError('A demonstração não pode gerar uma imagem de campanha real')
-        self.validate_live()
+        self.validate_live(request)
         self._claim()
         try:
             journal = self.repository.resume(run_id)
@@ -130,7 +133,8 @@ class CampaignService:
             def work():
                 try:
                     revision = self.repository.save_revision(journal, reference) if reference else None
-                    self._image(campaign, journal, product, request.changes.strip(), base_image, revision)
+                    self._image(campaign, journal, product, request.changes.strip(), base_image,
+                                revision, model_id=request.image_model_id)
                     journal.emit('run_completed')
                 except Exception as exc:
                     journal.emit('run_failed', journal.current_agent, **error_details(exc), message=public_error(exc))

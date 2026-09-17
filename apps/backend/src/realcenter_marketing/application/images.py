@@ -8,7 +8,8 @@ class ImageWorkflow:
     def __init__(self, repository: CampaignRepository, generate: ImageGenerator):
         self.repository, self.generate = repository, generate
 
-    def execute(self, campaign, journal, product, changes='', base_image=None, revision_reference=None):
+    def execute(self, campaign, journal, product, changes='', base_image=None,
+                revision_reference=None, model_id=None):
         journal.current_agent = 'Produção de imagem'
         journal.emit('image_started', journal.current_agent)
         try:
@@ -29,7 +30,8 @@ class ImageWorkflow:
                     continue
                 options = dict(changes=changes, base_image=base_image, card=card,
                                style_image=style, revision_reference=revision_reference) if card or base_image else {}
-                path = self.generate(campaign, journal, product, **options)
+                # The renderer choice travels as an opaque id; only composition resolves it.
+                path = self.generate(campaign, journal, product, model_id=model_id, **options)
                 journal.emit('image_completed', journal.current_agent, file=path.name,
                              card=card.number if card else None)
                 if carousel:
