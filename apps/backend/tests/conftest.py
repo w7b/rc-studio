@@ -13,7 +13,8 @@ def root(tmp_path):
     project = tmp_path / 'project'
     brand = project / 'brand'
     (brand / 'references').mkdir(parents=True)
-    for name in ('brand.md', 'colors.md', 'typography.md', 'visual-guidelines.md'):
+    for name in ('brand.md', 'tone-of-voice.md', 'colors.md', 'typography.md',
+                 'visual-guidelines.md'):
         (brand / name).write_text('Brand Kit de teste. Informações comerciais pendentes.', encoding='utf-8')
     Image.new('RGB', (8, 8), 'white').save(brand / 'references' / 'fixture.png')
     # Style references are filtered by family, so the fixture declares its own.

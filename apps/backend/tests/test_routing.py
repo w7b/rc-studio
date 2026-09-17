@@ -33,11 +33,27 @@ def test_director_calls_specialists_and_preserves_outputs(settings, demo, tmp_pa
     assert save_campaign(result, tmp_path) != path
 
 
-def test_only_current_specialist_enabled(settings, demo):
+def test_out_of_order_specialist_is_refused_without_hiding_the_tool(settings, demo):
+    """The tool list must not change between turns, or the cached prefix is lost.
+
+    A whole campaign was measured at 0 cached input tokens because every Director turn
+    sent a different set of tools. Order is enforced when the tool runs instead.
+    """
     team = build_team(settings, model=demo)
-    assert [t.is_enabled(None, team.director) for t in team.director.tools] == [True, False, False]
-    team.delegation_log.append("social_media")
-    assert [t.is_enabled(None, team.director) for t in team.director.tools] == [False, True, False]
+    names = [tool.name for tool in team.director.tools]
+    assert names == ['consult_social_media', 'consult_copywriter', 'consult_creative']
+
+    async def call(tool):
+        return await tool.on_invoke_tool(None, '{"input": "x"}')
+
+    copywriter = team.director.tools[1]
+    refused = asyncio.run(call(copywriter))
+    assert 'fora de ordem' in refused.lower() and 'consult_social_media' in refused
+
+    team.delegation_log.append('social_media')
+    # The same tool is now the pending step, and the list never changed.
+    assert [tool.name for tool in team.director.tools] == names
+    assert 'fora de ordem' not in asyncio.run(call(copywriter)).lower()
 
 
 def test_tools_match_manifests_and_future_agents_are_disabled(settings, demo):
@@ -92,3 +108,26 @@ def test_outputs_forbid_extra_fields_and_blank_content(demo):
 def test_live_requires_configuration(settings):
     with pytest.raises(ValueError, match="OPENAI_API_KEY"):
         asyncio.run(create_campaign(CampaignBrief(request="Campanha"), settings))
+
+
+def test_brand_kit_is_scoped_to_what_each_role_acts_on(settings):
+    """The kit is repeated in every agent's instructions, on every request it makes."""
+    from realcenter_marketing.infrastructure.resources import load_brand
+
+    root = settings.project_root
+    whole = json.loads(load_brand(root))
+    creative = json.loads(load_brand(root, 'creative'))
+    copywriter = json.loads(load_brand(root, 'copywriter'))
+
+    def names(kit):
+        # Keys are relative paths; chr(92) avoids an escape in this literal.
+        return {key.split(chr(92))[-1].split('/')[-1] for key in kit}
+
+    assert 'visual-guidelines.md' in names(creative), 'o Creative dirige a arte'
+    assert 'visual-guidelines.md' not in names(copywriter), 'o Copywriter não desenha'
+    assert {'brand.md', 'tone-of-voice.md'} <= names(copywriter)
+    assert len(load_brand(root, 'copywriter')) < len(load_brand(root, 'creative'))
+    # Folder documentation and the human review checklist never reach a prompt.
+    assert not any(name.lower() in {'readme.md', 'quality-checklist.md'} for name in names(whole))
+    # An unknown role keeps the whole kit rather than losing guidance silently.
+    assert json.loads(load_brand(root, 'papel_inexistente')) == whole

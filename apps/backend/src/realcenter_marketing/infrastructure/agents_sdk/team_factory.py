@@ -15,6 +15,31 @@ from .output_repair import DiagnosticOutputSchema, repair_tool
 
 
 
+def in_order(tool, log, index):
+    """Refuse an out-of-turn call instead of hiding the tool from the request.
+
+    Hiding it rewrites the tool list between turns, and the provider caches the
+    prefix that carries it: a whole campaign was measured at 0 cached input tokens
+    while the Director re-sent the same 40k-character instructions four times.
+    Keeping every tool in place makes that prefix identical across turns; the
+    sequence is enforced here, where an out-of-turn call costs nothing.
+    """
+    invoke = tool.on_invoke_tool
+    roles = [role for role, _ in SPECIALIST_STEPS]
+
+    async def guarded(context, arguments):
+        if specialist_enabled(log, index):
+            return await invoke(context, arguments)
+        pending = roles[len(log)] if len(log) < len(roles) else None
+        done = ', '.join(log) or 'nenhuma'
+        return (f'Chamada fora de ordem. Entregas concluídas: {done}. '
+                + (f'Consulte consult_{pending} agora.' if pending
+                   else 'Todos os especialistas já entregaram; finalize a revisão.'))
+
+    tool.on_invoke_tool = guarded
+    return tool
+
+
 @dataclass
 class Team:
     director: Agent
@@ -31,7 +56,6 @@ def build_team(settings, model=None, *, model_name=None, journal=None, brief=Non
     root = settings.project_root
     # The selected model names every agent and every usage record for the run.
     selected = model_name or settings.model
-    brand = load_brand(root)
     common = load_policy(root)
     specialists = {}
     outputs = {}
@@ -44,6 +68,8 @@ def build_team(settings, model=None, *, model_name=None, journal=None, brief=Non
         if {tool.name for tool in tools} != set(manifest.allowed_tools):
             raise ValueError(f"Tools divergem do manifesto: {role}")
         instructions = load_instructions(root, role)
+        # Each role carries only the guides it acts on, on every request it makes.
+        brand = load_brand(root, role)
 
         if journal:
             journal.emit('agent_config', manifest.name, role=role, prompt_version=prompt_version(manifest, instructions, common))
@@ -78,17 +104,14 @@ def build_team(settings, model=None, *, model_name=None, journal=None, brief=Non
             log.append(role)
             return value.model_dump_json()
 
-        def enabled(context, agent, index=index):
-            return specialist_enabled(log, index)
-
         tool = specialist.as_tool(
             tool_name=f"consult_{role}",
             tool_description=f"Consulta {specialist.name}. Passe objetivo, conceito e orientações específicas. O briefing factual completo e as entregas anteriores já estão no contexto; não os transcreva.",
             custom_output_extractor=extract,
-            is_enabled=enabled,
             max_turns=3,
             failure_error_function=None,
         )
-        tools.append(repair_tool(tool, specialist, journal) if journal else tool)
+        tools.append(in_order(repair_tool(tool, specialist, journal) if journal else tool,
+                              log, index))
     director = make_agent("marketing_director", DirectorReview, tools)
     return Team(director, specialists, outputs, log)

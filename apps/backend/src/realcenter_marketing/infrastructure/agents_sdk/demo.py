@@ -16,9 +16,13 @@ class DemoModel(Model):
                            output_schema, handoffs, tracing, **kwargs):
         name = output_schema.output_type.__name__
         self.calls.append((name, system_instructions, input))
-        if name == "DirectorReview" and tools:
+        # Every specialist tool stays in the request so the prompt prefix can be cached,
+        # so the scripted Director advances the sequence itself instead of relying on
+        # the SDK to hide the tools it must not call yet.
+        turn = sum(1 for call in self.calls if call[0] == "DirectorReview")
+        if name == "DirectorReview" and tools and turn <= len(tools):
             output = ResponseFunctionToolCall(
-                type="function_call", name=tools[0].name, call_id=uuid4().hex,
+                type="function_call", name=tools[turn - 1].name, call_id=uuid4().hex,
                 arguments=json.dumps({"input": "Campanha institucional de final de semana; sem ofertas confirmadas."}),
             )
         else:
