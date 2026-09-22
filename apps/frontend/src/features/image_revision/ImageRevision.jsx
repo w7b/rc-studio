@@ -1,3 +1,5 @@
+import Textarea from '../../shared/components/Textarea.jsx';
+import Form from '../../shared/components/Form.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { X, ImagePlus } from 'lucide-react';
 import UploadField from '../../shared/components/UploadField.jsx';
@@ -42,7 +44,7 @@ export default function ImageRevision({ images, busy, onSubmit, onClose }) {
       }}
       onClose={onClose}
     >
-      <form onSubmit={submit} className="space-y-5">
+      <Form noValidate onSubmit={submit} className="space-y-5">
         <div className="flex justify-between items-center gap-3">
           <h2 id="revision-title">Nova versão da imagem</h2>
           <button
@@ -104,7 +106,8 @@ export default function ImageRevision({ images, busy, onSubmit, onClose }) {
           </div>
           <label>
             <span className="field-label">O que você quer alterar?</span>
-            <textarea
+            <Textarea
+              className="resize-none"
               autoFocus
               required
               rows={7}
@@ -152,7 +155,7 @@ export default function ImageRevision({ images, busy, onSubmit, onClose }) {
             {sending ? 'Iniciando…' : 'Gerar nova versão'}
           </button>
         </div>
-      </form>
+      </Form>
     </dialog>
   );
 }

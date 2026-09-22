@@ -44,5 +44,6 @@ def test_live_provider_is_inherited_by_all_specialists(settings, demo, monkeypat
     settings.model = "fixture-model"
     result = asyncio.run(create_campaign(CampaignBrief(request="Campanha"), settings))
     assert result.execution_mode == "live"
-    assert len(seen_models) == 7
+    # Plan, three specialists, review: one call each, no Director re-reads.
+    assert len(seen_models) == 5
     assert set(seen_models) == {"fixture-model"}

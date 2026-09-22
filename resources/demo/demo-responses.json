@@ -1,4 +1,27 @@
 {
+  "CampaignPlan": {
+    "concept": "A Real Center nos seus planos de final de semana.",
+    "briefs": [
+      {
+        "role": "social_media",
+        "objective": "Planejar a sequencia organica de Feed e Stories para o final de semana.",
+        "concept": "A Real Center nos seus planos de final de semana.",
+        "guidance": "Demonstracao fixa, sem oferta comercial. Nao invente precos, datas nem endereco."
+      },
+      {
+        "role": "copywriter",
+        "objective": "Escrever as copies do plano aprovado, uma por peca planejada.",
+        "concept": "A Real Center nos seus planos de final de semana.",
+        "guidance": "Acompanhe a sequencia de Stories do plano. Linguagem institucional, sem promessa comercial."
+      },
+      {
+        "role": "creative",
+        "objective": "Descrever as artes correspondentes as copies entregues.",
+        "concept": "A Real Center nos seus planos de final de semana.",
+        "guidance": "Direcao visual apenas; as dimensoes sao definidas pela aplicacao, nao pelo texto."
+      }
+    ]
+  },
   "SocialPlan": {
     "strategy": "Aquecer o interesse na sexta e convidar à visita no sábado, com conteúdo institucional enquanto produtos e ofertas não forem confirmados.",
     "audience_hypothesis": "Pessoas da região interessadas em conhecer a Real Center; região e perfil a confirmar.",

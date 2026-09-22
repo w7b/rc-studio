@@ -1,12 +1,14 @@
 """Filesystem implementation preserving the existing run layout and media IDs."""
 import base64
 import json
+from pathlib import Path
 from uuid import uuid4
 
 from realcenter_marketing.application.commands import RunRequest
 from realcenter_marketing.domain.campaigns import Campaign
 from realcenter_marketing.infrastructure.observability.journal import RunJournal
 from realcenter_marketing.infrastructure.uploads import decode_upload
+from realcenter_marketing.infrastructure.references import catalog as reference_catalog, reference_file
 from .filesystem import media_catalog, read_json, run_directory
 
 
@@ -16,16 +18,50 @@ class FileCampaignRepository:
 
     decode_upload = staticmethod(decode_upload)
 
+    def _input_entry(self, key):
+        # /api/media retains its legacy IDs. /api/references (including newly added
+        # products) returns a different, content-based ID. Accept both contracts
+        # without duplicating entries or changing existing media URLs.
+        entry = media_catalog(self.root).get(key)
+        if entry is not None:
+            return entry
+        item = next((item for item in reference_catalog(self.root) if item['id'] == key), None)
+        if item is not None:
+            return {'path': reference_file(self.root, key), 'product': item['kind'] == 'product'}
+        return None
+
     def prepare_inputs(self, request):
         upload = decode_upload(request.upload)
         reference = decode_upload(request.reference_upload)
         product = None
         if request.product_id:
-            entry = media_catalog(self.root).get(request.product_id)
+            entry = self._input_entry(request.product_id)
             if not entry or not entry['product']:
                 raise ValueError('Selecione uma foto válida do catálogo')
             product = entry['path']
+        # A reference chosen from the library resolves to the same bytes an upload would
+        # have carried, so everything downstream stays identical.
+        if reference is None and getattr(request, 'reference_id', None):
+            entry = self._input_entry(request.reference_id)
+            if not entry:
+                raise ValueError('Selecione uma referência válida do catálogo')
+            reference = Path(entry['path']).read_bytes()
         return upload, reference, product
+
+    def set_title(self, run_id, title):
+        """A name the store chose, kept beside the run rather than in the journal.
+
+        events.jsonl is append-only and read in full on every poll; a rename is not an
+        event of the execution and does not belong in that stream.
+        """
+        directory = self.root / 'campaigns' / 'runs' / run_id
+        if not directory.is_dir():
+            raise ValueError('Campanha não encontrada')
+        target = directory / 'title.json'
+        temporary = target.with_suffix('.tmp')
+        temporary.write_text(json.dumps({'title': title}, ensure_ascii=False), encoding='utf-8')
+        temporary.replace(target)
+        return title
 
     def create_run(self, request, inputs):
         upload, reference, product = inputs
@@ -43,6 +79,9 @@ class FileCampaignRepository:
         path = journal.directory / (name + ('.png' if content.startswith(b'\x89PNG') else '.jpg'))
         path.write_bytes(content)
         return path
+
+    def create_consultation(self):
+        return RunJournal(self.root / 'consultations' / uuid4().hex)
 
     def create_assist(self):
         return RunJournal(self.root / 'campaigns' / 'brief-assists' / uuid4().hex)

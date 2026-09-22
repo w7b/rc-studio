@@ -113,6 +113,8 @@ class PreviewParser(HTMLParser):
 def import_image(request):
     if request.upload:
         return decode_upload(request.upload), ''
+    if request.kind == 'product':
+        raise ValueError('Envie um arquivo PNG ou JPEG para cadastrar a imagem do produto')
     url = request.url.strip()
     parsed = urlsplit(url)
     if parsed.scheme != 'https' or parsed.username or parsed.password or parsed.port not in (None, 443):
@@ -148,6 +150,18 @@ def import_image(request):
     return content, url
 
 
+def _image_file(root, item):
+    directory = (root / 'brand/products/reference-only' if item.get('kind') == 'product'
+                 else root / 'campaigns/references')
+    return directory / f"{item['id']}.{item['extension']}"
+
+
+def _display_size(image):
+    # Browsers honor EXIF rotation; crop coordinates and dimensions must do so too.
+    width, height = image.size
+    return (height, width) if image.getexif().get(274) in (5, 6, 7, 8) else (width, height)
+
+
 def catalog(root):
     directory = root / 'campaigns' / 'references'
     result = []
@@ -157,8 +171,13 @@ def catalog(root):
             continue
         if item.get('id') != path.stem or item.get('extension') not in ('png', 'jpg'):
             continue
-        image = directory / (path.stem + '.' + item['extension'])
-        if image.is_file() and image.resolve().is_relative_to(directory.resolve()):
+        image = _image_file(root, item)
+        if image.is_file() and image.resolve().is_relative_to(root.resolve()):
+            try:
+                with Image.open(image) as source:
+                    item['width'], item['height'] = _display_size(source)
+            except (OSError, ValueError):
+                continue
             result.append(item)
     return sorted(result, key=lambda item: item['created_at'], reverse=True)
 
@@ -166,18 +185,24 @@ def catalog(root):
 def save_reference(root, request):
     content, source = import_image(request)
     with Image.open(io.BytesIO(content)) as image:
-        width, height = image.size
+        width, height = _display_size(image)
         extension = 'png' if image.format == 'PNG' else 'jpg'
     key = hashlib.sha256(content + request.kind.encode()).hexdigest()[:32]
     directory = root / 'campaigns' / 'references'
+    if not directory.resolve().is_relative_to(root.resolve()):
+        raise ValueError('Diretório de referências inválido')
     directory.mkdir(parents=True, exist_ok=True)
     existing = next((item for item in catalog(root) if item['id'] == key), None)
     if existing:
         return existing
-    item = dict(id=key, title=request.title.strip() or f'Referência {request.kind}', kind=request.kind,
+    item = dict(id=key, title=request.title.strip() or ('Imagem de produto' if request.kind == 'product' else f'Referência {request.kind}'), kind=request.kind,
                 source=source, extension=extension, width=width, height=height,
                 created_at=datetime.now(timezone.utc).isoformat(), url=f'/api/references/{key}/image')
-    (directory / f'{key}.{extension}').write_bytes(content)
+    target = _image_file(root, item)
+    if not target.resolve().is_relative_to(root.resolve()):
+        raise ValueError('Diretório de imagens inválido')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(content)
     # Atomic metadata publication keeps concurrent listing from seeing partial JSON.
     import uuid
     temporary = directory / f'.{key}-{uuid.uuid4().hex}.tmp'
@@ -190,4 +215,4 @@ def reference_file(root, key):
     item = next((item for item in catalog(root) if item['id'] == key), None)
     if item is None:
         raise ValueError('Referência não encontrada')
-    return root / 'campaigns' / 'references' / f"{key}.{item['extension']}"
+    return _image_file(root, item)

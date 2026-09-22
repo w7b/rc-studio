@@ -1,90 +1,114 @@
-# Arquitetura aprovada — Real Center Studio
+# Arquitetura e decisões
 
-Monólito modular com Clean Architecture. Frontend React e backend Python permanecem no mesmo produto e no mesmo container de produção. O SDK atual e os contratos HTTP foram preservados.
+O Studio é um monólito modular com React e Python. A imagem `runtime` contém o build
+React e o backend; no modo compartilhado, a mesma imagem atende HTTP e executa o worker.
+NGINX é a entrada HTTP e PostgreSQL mantém identidade, cotas e fila. O modo standalone
+continua disponível sem banco ou login, com uma raiz de dados local.
 
-## Estrutura implementada
+## Fronteiras
 
-```text
-apps/
-  backend/
-    pyproject.toml
-    src/realcenter_marketing/
-      domain/                 modelos e invariantes
-      application/
-        campaigns/            serviço de comandos, composição e interfaces
-        commands.py           entradas dos casos de uso
-        orchestration.py      política de delegação
-        images.py             geração em lote e retomada de cards
-        queries.py            interface de consultas
-        diagnostics.py        relatórios sem informações sensíveis
-      infrastructure/
-        agents_sdk/           montagem, runtime, hooks, correção e demonstração
-        persistence/          implementação em arquivos
-        integrations/         contratos e adaptadores ainda inativos
-        resources.py          manifestos, instruções e aliases
-        execution.py          execução local e fechamento
-        process_lease.py      exclusão entre processos
-        image_generation.py   integração de imagens
-        references.py         importação e biblioteca de referências
-        system_catalog.py     catálogo Graphify
-      presentation/
-        http/                 API e arquivos estáticos
-        cli.py                entrada de linha de comando
-      bootstrap/              configuração e composição das dependências
-    tests/
-  frontend/
-    src/
-      app/
-      features/               campanhas, briefing, referências, revisões e sistema
-      shared/                 cliente HTTP, componentes e estilos compartilhados
-resources/
-  agents/                     manifestos e prompts versionados
-  policies/
-  demo/
-docs/
-scripts/
-```
+| Camada em `apps/backend/src/realcenter_marketing/` | Responsabilidade |
+| --- | --- |
+| `domain/` | Modelos e invariantes; não importa HTTP, SDK ou persistência |
+| `application/` | Casos de uso e portas, sem I/O direto ou controle de threads |
+| `infrastructure/` | SDK, provedores, arquivos, SQL, filas e integrações |
+| `presentation/` | HTTP e CLI, usando comandos e consultas |
+| `bootstrap/` | Configuração e montagem das dependências por processo/loja |
 
-Pastas têm conteúdo efetivo; não foram criadas estruturas vazias para funcionalidades futuras. O pacote Python mantém `realcenter_marketing`. Os módulos importáveis mudaram; HTTP e identificadores persistidos não mudaram.
+Frontend: `apps/frontend/src/app/`, `features/` e `shared/`. URLs ficam em
+`shared/navigation/routes.js`; menus, permissões e breadcrumbs usam esse catálogo.
+Os contratos HTTP continuam em `/api/*` e `/media/*`. Pydantic valida entradas e saídas.
 
-## Dependências
+## Decisões preservadas
 
-- `domain` não importa aplicação, adaptadores, HTTP ou SDK.
-- `application` depende de domínio e interfaces, sem acesso direto a arquivos, threads ou SDK.
-- `infrastructure` implementa armazenamento, execução e fornecedores.
-- O adaptador HTTP depende de comandos e consultas. Sua fábrica chama `bootstrap/container.py` para montar o processo.
-- `bootstrap` conecta implementações. Não há contêiner de injeção global nem estado de campanha compartilhado entre equipes.
+- **Monólito modular (ADR 001, 10/09/2026):** separar responsabilidades sem microserviços,
+  preservar os contratos públicos e os IDs de mídia. Caminhos de módulos Python internos
+  puderam mudar; migração física de dados precisa de compatibilidade e reversão próprias.
+- **PostgreSQL (ADR 002, ampliado em 20/09/2026):** identidade, sessões, vínculos, convites,
+  cotas e jobs exigem operações transacionais. SQL parametrizado com psycopg, sem ORM;
+  migrações SQL versionadas, transação, lock consultivo e `schema_migrations` no boot.
+  A baseline adota instalações existentes e a migração de cargos converte os nomes antigos.
+- **Arquivos para os artefatos:** Brand Kit, campanhas, mídia e journals continuam no disco.
+  Preservar os caminhos relativos usados nos IDs SHA-256. Um ID não autoriza acesso:
+  caminhos idênticos em lojas distintas produzem o mesmo ID, sempre resolvido pela sessão.
+- **Um deploy compartilhado:** escolhido pelo operador em vez de SQLite ou um container
+  por loja. Web e worker compartilham imagem, banco e caminhos de arquivos. Não há broker
+  externo. Múltiplos nós exigiriam armazenamento compartilhado e coordenação adicional.
 
-Pydantic permanece nos modelos para preservar as validações existentes. Os contratos de entrada são compartilhados quando a semântica é idêntica; não foram criadas cópias redundantes de cada modelo.
+Os ADRs e históricos separados foram absorvidos aqui. Esta descrição substitui as
+etapas antigas que ainda diziam que não havia login, banco, fila ou Docker.
 
-## Agentes
+## Agentes e campanhas
 
-A sequência de papéis tem uma fonte no domínio. A aplicação mapeia saídas e habilitação; o adaptador do SDK executa essa política. Director continua coordenando Social Media → Copywriter → Creative, seguido pela revisão e composição validada da campanha. Cada execução constrói uma equipe nova.
+A aplicação executa **Director planeja → Social Media → Copywriter → Creative → Director
+revisa**, normalmente cinco chamadas. A ordem é fixa no runtime; especialistas não são
+mais tools do Director. Cada execução monta equipe e cliente de provedor próprios.
+Entregas anteriores, fatos e documentos da marca compõem o contexto das próximas etapas.
+Schemas, sequência e formatos são validados antes de compor a campanha; correção de
+saída inválida pode exigir uma chamada adicional.
 
-`creative_producer` é a pasta do papel `creative`; `performance_marketing` é a pasta do papel `performance`. IDs de manifestos, nomes de tools e arquivos históricos são preservados. Performance e Marketing Analyst continuam planejados; os adaptadores comerciais continuam desabilitados.
+A produção de imagens é posterior aos textos. Fotos de produto são enviadas ao modelo
+de imagem; agentes de texto não interpretam os pixels. Carrosséis preservam cards já
+concluídos; edição salva uma cópia. Retomar uma campanha sem textos consolidados cria
+outra execução. Se os textos já estão salvos, a tentativa refaz somente imagens pendentes.
+Excluir uma campanha move seus arquivos para `campaigns/runs/.trash` e exige ausência
+de trabalho ativo. Nenhum fluxo publica em redes sociais automaticamente.
 
-Os eventos `agent_config` registram o hash de manifesto, instruções e política. O conteúdo dos prompts não é acrescentado ao log. A assistência de briefing mantém uma única chamada ao Creative Producer.
+Performance e Marketing Analyst rodam em [consultas separadas](../marketing-consultations.md).
+Cada consulta consome uma unidade de `assists`; análise valida IDs de fontes e trechos
+literais fornecidos, sem navegar nas URLs. A revisão editorial continua humana.
 
-## Infraestrutura e execução
+## Execução e consistência
 
-Um processo escritor por diretório de dados, com um slot de execução. A API obtém um bloqueio do sistema operacional antes de iniciar. O scheduler recusa trabalho novo durante o fechamento e aguarda o trabalho aceito. A configuração não suporta múltiplas réplicas compartilhando o mesmo diretório.
+- Standalone usa scheduler local e bloqueio de processo para um escritor por raiz.
+  Trabalho em voo é drenado no fechamento; interrupções abruptas ficam visíveis no journal.
+- Em shared, HTTP valida, reserva cota e grava run/job; o worker consome PostgreSQL com
+  `FOR UPDATE SKIP LOCKED`. Reiniciar apenas o web preserva o trabalho do worker.
+- O worker renova heartbeat a cada 20 s, com lease de 120 s e até três tentativas após
+  perda do worker. Conclusão exige o dono do claim. Falha real de execução é terminal;
+  montagem ausente também. `BusyError` re-enfileira. Isso não garante execução única.
+- Web e worker possuem pools separados; um worker executa jobs serialmente. Consultas
+  síncronas no web podem coexistir com campanhas no worker. Cota é reservada na admissão,
+  sem nova cobrança pelo worker; o limite do web não é teto global entre processos.
+- A admissão consulta jobs pendentes, sem índice único parcial por loja. Dois POSTs
+  simultâneos ainda exigem atenção. A API sobrepõe estado da fila ao snapshot do disco.
+- Cotas usam unidades de campanhas/imagens/assists por mês em `America/Sao_Paulo`.
+  Preço desconhecido não vira zero; USD é estimativa, não bloqueio confiável. Reserva de
+  carrossel pode exceder imagens realmente geradas numa retomada; faturamento deve usar eventos.
 
-Estados continuam derivados dos eventos persistidos: execução iniciada sem evento terminal aparece como `interrupted` após reinício. Não há repetição automática de chamadas pagas. A retomada manual preserva o comportamento anterior: repete somente imagens quando a campanha está consolidada; antes disso, inicia uma nova campanha preservando a antiga.
+## Identidade e isolamento
 
-Uma fila externa, múltiplos workers e deduplicação persistente de requisições HTTP são evoluções separadas. O bloqueio atual impede execuções concorrentes; não é uma garantia de processamento exatamente uma vez.
+`REALCENTER_DEPLOYMENT_MODE`: `shared` exige banco válido; `standalone` o desliga;
+`auto` usa banco quando configurado. Em Docker, o padrão é shared. Não remover login
+como fallback quando banco falha. OWNER administra a plataforma; DEFAULT e PAID têm
+acesso e cotas por vínculo com a loja. Assinatura por vínculo, em vez de por loja,
+permanece uma escolha a revisar antes de automatizar cobrança.
 
-## Dados e caminhos
+Sessões/convites são guardados por hash; senhas usam scrypt com limite de concorrência.
+Cookie é HttpOnly/SameSite=Lax e Secure quando o esquema público é HTTPS. A sessão
+expira por tempo absoluto e ociosidade e perde validade com suspensão/revogação.
+CSRF pertence à sessão autenticada, sem token anônimo em `/api/config` no modo shared.
+OAuth autentica pessoas já autorizadas, exige e-mail verificado e usa PKCE/state.
 
-Campanhas, uploads, biblioteca, custos e Brand Kit continuam em `realcenter-marketing-ai/`. A migração física para `var/` está deliberadamente separada da reorganização do código. `REALCENTER_DATA_ROOT` configura essa raiz. Nunca renomear arquivos históricos ou recalcular IDs para aplicar somente uma mudança de organização.
+A raiz registrada da loja governa toda leitura de mídia/configuração. Credenciais vêm
+somente da plataforma (`REALCENTER_ENV_ROOT`, incluindo `.model-keys/`); `.env` de loja
+não pode redirecionar endpoints. Overrides de agentes/políticas por raiz ficam desligados
+por padrão. Rate limit em memória e coordenação entre réplicas são limitações conhecidas.
+Detalhes operacionais: [administração e login](../admin-and-auth.md).
 
-Os IDs de mídia ainda usam SHA-256 do caminho relativo legado. O frontend continua usando `/api/*`, `/media/*`, `X-App-Token`, a mesma validação de origem e os mesmos formatos JSON.
+## Dados e operação
 
-Prompts e políticas ficam em `resources/`; Brand Kit editável e mídia do usuário ficam fora do Git. `REALCENTER_RESOURCES_ROOT` e `REALCENTER_STATIC_ROOT` permitem implantação fora do checkout. Diretórios legados de recursos em raízes explícitas continuam aceitos para integração e testes; não devem ser mantidas duas cópias no checkout normal.
+Por padrão, `data/tenants/default` atende standalone, `data/tenants/<slug>` guarda cada
+loja e `data/platform` guarda a configuração privada. `REALCENTER_DATA_ROOT` configura os dados; `REALCENTER_TENANTS_ROOT`, as lojas;
+`REALCENTER_ENV_ROOT`, a configuração privada; `REALCENTER_RESOURCES_ROOT`, os prompts
+versionados; `REALCENTER_STATIC_ROOT`, o build. Nunca remova Markdown de `resources/`
+ou dos kits como se fosse documentação.
 
-## Validação e reversão
+Backup inclui banco primeiro, depois arquivos das lojas e `.model-keys/`. A cópia de
+arquivos ativos não é snapshot transacional global; recuperação precisa ser ensaiada.
+Standalone continua lendo campanhas sem banco, mas não substitui sessões, cotas ou jobs.
+O servidor HTTP atual usa a biblioteca padrão; exposição pública exige a topologia
+HTTPS e os controles descritos no [guia NGINX](../nginx.md).
 
-A suíte original foi portada para os novos imports. Testes adicionais verificam dependências, ausência de I/O na aplicação, ciclo de execução, bloqueio, caminhos, contratos HTTP e identidade da mídia antiga. Testes usam marca e imagens sintéticas, sem arquivos pessoais ou credenciais.
-
-O build React produz `apps/frontend/dist`. Docker copia esse build para o runtime Python; o SDK e Node não são expostos ao navegador. Os volumes de dados conservam seus caminhos anteriores.
-
-A cópia local `.architecture-work/before.zip` e os diretórios em `.architecture-work/original-tree/` permitem consultar o código anterior. Esses arquivos não são versionados nem enviados ao Docker. Não houve migração de dados ou publicação automática de conteúdo.
+[Validação](validation.md) define os checks de CI e a inspeção manual.
+[ROADMAP](../../ROADMAP.md) registra somente pendências e decisões ainda não implementadas.

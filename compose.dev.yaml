@@ -1,0 +1,128 @@
+# Development overlay: edit a file, see the change, without rebuilding by hand.
+#
+#   docker compose -f compose.yaml -f compose.dev.yaml --profile shared watch
+#
+# Three different mechanisms, because the three kinds of file behave differently:
+#
+#   Python      synced into the container, then the service restarts. Python has no hot
+#               reload, so a restart is the only way the new code runs.
+#   Frontend    the `vite` service rebuilds into the bind-mounted dist. The backend reads
+#               static files from disk on every request, so a browser refresh is enough —
+#               no container restart, no rebuild.
+#   Dependencies  pyproject.toml or package-lock.json changing forces a real image
+#               rebuild, since neither can be fixed by copying a file in.
+#
+# A Python save restarts web and worker. Only the worker restart can interrupt durable
+# execution, which is recovered after the lease expires. Production does not watch files.
+
+name: studio-ai-dev
+
+x-dev-database: &dev-database
+  REALCENTER_DEPLOYMENT_MODE: shared
+  DATABASE_URL: ""
+  PGHOST: db
+  PGPORT: "5432"
+  PGDATABASE: ${DEV_POSTGRES_DB:-studio_dev}
+  PGUSER: ${DEV_POSTGRES_USER:-studio_dev}
+  PGPASSWORD: ${DEV_POSTGRES_PASSWORD:-studio-dev}
+  REALCENTER_DATA_ROOT: /app/data/tenants/default
+  REALCENTER_TENANTS_ROOT: /app/data/tenants
+  REALCENTER_ENV_ROOT: /app/data/platform
+
+services:
+  nginx:
+    ports: !override
+      - "127.0.0.1:${DEV_HTTP_PORT:-8767}:8080"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--header=Host: localhost:${DEV_HTTP_PORT:-8767}", "-O", "/dev/null", "http://127.0.0.1:8080/api/config"]
+
+  studio:
+    build:
+      context: .
+      target: dev
+    # Long drains make no sense when the whole point is restarting on every save.
+    stop_grace_period: 10s
+    environment:
+      <<: *dev-database
+      REALCENTER_PUBLIC_HOST: localhost:${DEV_HTTP_PORT:-8767},127.0.0.1:${DEV_HTTP_PORT:-8767}
+      REALCENTER_PUBLIC_SCHEME: http
+      GOOGLE_CLIENT_ID: ${DEV_GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${DEV_GOOGLE_CLIENT_SECRET:-}
+      # Surfaces stack traces in `docker compose logs studio` instead of swallowing them.
+      PYTHONFAULTHANDLER: '1'
+    env_file: !override
+      - path: ./.dev-data/platform/.env
+        required: false
+    volumes:
+      - ./.dev-data:/app/data
+      # The built frontend, so a vite rebuild is visible on the next request.
+      - ./apps/frontend/dist:/app/apps/frontend/dist
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/backend/src
+          target: /app/apps/backend/src
+        - action: sync+restart
+          path: ./resources
+          target: /app/resources
+        - action: sync+restart
+          path: ./scripts
+          target: /app/scripts
+        - action: rebuild
+          path: ./apps/backend/pyproject.toml
+
+  worker:
+    build:
+      context: .
+      target: dev
+    stop_grace_period: 10s
+    environment:
+      <<: *dev-database
+    env_file: !override
+      - path: ./.dev-data/platform/.env
+        required: false
+    volumes:
+      - ./.dev-data:/app/data
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/backend/src
+          target: /app/apps/backend/src
+        - action: sync+restart
+          path: ./resources
+          target: /app/resources
+        - action: sync+restart
+          path: ./scripts
+          target: /app/scripts
+        - action: rebuild
+          path: ./apps/backend/pyproject.toml
+
+  db:
+    environment:
+      POSTGRES_DB: ${DEV_POSTGRES_DB:-studio_dev}
+      POSTGRES_USER: ${DEV_POSTGRES_USER:-studio_dev}
+      POSTGRES_PASSWORD: ${DEV_POSTGRES_PASSWORD:-studio-dev}
+    volumes: !override
+      - studio-dev-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DEV_POSTGRES_USER:-studio_dev} -d ${DEV_POSTGRES_DB:-studio_dev}"]
+
+  # Rebuilds the frontend into the shared dist whenever a source file changes. Running it
+  # here rather than on the host keeps one command for the whole stack.
+  vite:
+    image: node:22-bookworm-slim
+    working_dir: /build/apps/frontend
+    command: sh -c "npm ci && npm run build -- --watch"
+    volumes:
+      - ./apps/frontend:/build/apps/frontend
+      - ./resources/catalog:/build/resources/catalog:ro
+      # node_modules stays in a named volume: the host may be Windows while the image is
+      # Linux, and native binaries do not cross that line. A volume also survives
+      # restarts, so npm ci only pays its cost once.
+      - vite-modules:/build/apps/frontend/node_modules
+    restart: unless-stopped
+    init: true
+
+volumes:
+  studio-dev-db:
+  vite-modules:

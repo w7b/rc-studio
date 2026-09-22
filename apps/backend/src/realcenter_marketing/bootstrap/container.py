@@ -2,12 +2,12 @@
 from dataclasses import dataclass
 from realcenter_marketing.application.queries import StudioQueries
 from realcenter_marketing.infrastructure.queries import LocalStudioQueries
-from realcenter_marketing.infrastructure.system_catalog import SystemCatalog
 from realcenter_marketing.infrastructure.process_lease import ProcessLease
+from .registry import TenantContext, TenantRegistry
 from .model_catalog import image_models, text_models
 from .paths import AppPaths
 from .services import CampaignService
-from .settings import Settings
+from .settings import Settings, platform_values
 
 
 @dataclass
@@ -15,8 +15,14 @@ class Container:
     paths: AppPaths
     service: object
     queries: StudioQueries
-    catalog: SystemCatalog
     lease: ProcessLease
+    registry: TenantRegistry = None
+
+    @property
+    def standalone(self):
+        """The context used when there is no session to scope the request by."""
+        return TenantContext(slug='local', paths=self.paths, service=self.service,
+                             queries=self.queries)
 
     def public_config(self):
         settings = Settings.load(self.paths.data_root)
@@ -29,20 +35,36 @@ class Container:
 
     def close(self):
         try:
+            if self.registry is not None:
+                self.registry.close(timeout=0)
             self.service.close()
-            self.catalog.close()
         finally:
             self.lease.close()
 
+    def admin_metrics(self, store):
+        from realcenter_marketing.infrastructure.admin_metrics import collect_metrics
+        return collect_metrics(store, self.registry.root_for)
 
-def build_container(root=None):
+    def model_keys(self, tenant):
+        from realcenter_marketing.infrastructure.model_credentials import public
+        from .settings import platform_values
+        return public(self.paths.env_root, self.registry.root_for(tenant.slug, tenant.root_path),
+                      platform_values(self.paths.env_root))
+
+    def save_model_keys(self, tenant, changes):
+        from realcenter_marketing.infrastructure.model_credentials import save
+        save(self.paths.env_root, self.registry.root_for(tenant.slug, tenant.root_path), changes)
+        return self.model_keys(tenant)
+
+
+def build_container(root=None, quota_for=None, queue_for=None):
     paths = AppPaths.discover(root)
     lease = ProcessLease(paths.data_root).acquire()
     try:
         service = CampaignService(paths.data_root)
-        # For a standalone data root, index its own sources in addition to the app.
-        catalog = SystemCatalog(paths.data_root, sources=paths.catalog_sources, workspace=paths.workspace)
-        return Container(paths, service, LocalStudioQueries(paths.data_root), catalog, lease)
+        registry = TenantRegistry(paths.tenants_root, quota_for=quota_for, env_root=paths.env_root,
+                                  queue_for=queue_for)
+        return Container(paths, service, LocalStudioQueries(paths.data_root, editor_config=lambda: platform_values(paths.env_root)), lease, registry)
     except BaseException:
         lease.close()
         raise

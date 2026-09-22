@@ -1,0 +1,333 @@
+/* A nested menu item: indented and quieter than its parent, with a rule tying it to the
+   entry above so the grouping reads without a heading. */
+.sidebar nav a.nav-child {
+  margin-left: 18px;
+  padding-left: 14px;
+  font-size: 12px;
+  border-left: 1px solid var(--line);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.sidebar nav a.nav-child svg {
+  width: 15px;
+  height: 15px;
+}
+.sidebar nav a.nav-child:not(.active) {
+  color: var(--text-dim);
+}
+
+/* ---- Menu: hamburger and collapsible groups ---------------------------------- */
+
+.menu-toggle {
+  position: fixed;
+  top: 16px;
+  left: 16px;
+  z-index: var(--z-menu);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--control-radius);
+  background: var(--surface-2);
+  border: 1px solid var(--control-line);
+  color: var(--text);
+  transition:
+    background-color var(--motion-duration) var(--motion-ease),
+    border-color var(--motion-duration) var(--motion-ease);
+}
+.menu-toggle:hover {
+  background: var(--control-hover);
+  border-color: var(--control-line-hover);
+}
+
+/* Closed by default and slid out of the way, so the shell reclaims the full width. */
+.sidebar {
+  position: fixed;
+  width: 242px;
+  height: 100dvh;
+  padding: 34px 22px;
+  overflow-y: auto;
+  transform: translateX(-100%);
+  visibility: hidden;
+  transition:
+    transform var(--motion-duration) var(--motion-ease),
+    visibility 0s var(--motion-duration);
+}
+.sidebar.is-open {
+  transform: translateX(0);
+  visibility: visible;
+  transition-delay: 0s;
+  box-shadow: var(--shadow-modal);
+}
+.sidebar nav {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+}
+.sidebar nav a {
+  font-size: 13px;
+  padding: 13px 12px;
+}
+.app-shell > .workspace {
+  margin-left: 0;
+  width: 100%;
+  transition:
+    margin-left var(--motion-duration) var(--motion-ease),
+    width var(--motion-duration) var(--motion-ease);
+}
+.app-shell.menu-pinned > .workspace {
+  margin-left: 242px;
+  width: calc(100% - 242px);
+}
+.app-shell .topbar {
+  padding-left: 72px;
+}
+.app-shell.menu-pinned .topbar {
+  padding-left: 32px;
+}
+.app-shell > main,
+.app-shell > .app-main {
+  margin-left: 0 !important;
+}
+/* Room for the toggle, which floats over the content. */
+.app-shell > main > *,
+.app-shell > .app-main > * {
+  --menu-gutter: 64px;
+}
+
+.menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  background: var(--backdrop);
+  border: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity var(--motion-duration) var(--motion-ease),
+    visibility 0s var(--motion-duration);
+}
+.menu-scrim.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.nav-caret {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 6px;
+  padding: 2px;
+  color: var(--text-dim);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.nav-caret.is-open {
+  transform: rotate(90deg);
+}
+/* No plate behind the mark: on an active row the icon is already dark and a darker
+   square behind it buried the shape. Lightening the icon is the whole affordance. */
+.nav-caret:hover,
+.nav-caret:focus-visible {
+  color: var(--brand-strong);
+  background: none;
+}
+.sidebar nav a.active .nav-caret {
+  color: var(--brand-contrast);
+}
+.sidebar nav a.active .nav-caret:hover {
+  color: var(--on-light);
+  opacity: 0.7;
+}
+
+/* ---- Select and checkbox ------------------------------------------------------ */
+
+/* A single chevron drawn as one inline SVG, replacing the two stacked gradients that
+   faked an arrowhead: it stays sharp at any zoom and follows the text colour. */
+select {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a3a3a3' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 13px center !important;
+  background-size: 15px 15px !important;
+  padding-right: 40px;
+  text-overflow: ellipsis;
+}
+select:hover:not(:disabled) {
+  border-color: var(--control-line-hover);
+}
+select:disabled {
+  opacity: 0.55;
+}
+
+/* Custom box so the tick and the radius match the rest of the UI; the native control
+   only ever offered its accent colour. */
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 1.5px solid var(--control-line-hover);
+  border-radius: 5px;
+  background: var(--field-background);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration) var(--motion-ease),
+    border-color var(--motion-duration) var(--motion-ease);
+}
+input[type='checkbox']::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  transform: scale(0);
+  transition: transform 120ms var(--motion-ease);
+  background: var(--brand-contrast);
+  clip-path: polygon(14% 44%, 0 60%, 39% 100%, 100% 18%, 84% 4%, 39% 68%);
+}
+input[type='checkbox']:checked {
+  background: var(--brand);
+  border-color: var(--brand);
+}
+input[type='checkbox']:checked::after {
+  transform: scale(1);
+}
+input[type='checkbox']:hover:not(:disabled) {
+  border-color: var(--brand-ring);
+}
+input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--brand-ring);
+  outline-offset: 2px;
+}
+input[type='checkbox']:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Campaign names run long; the control keeps a fixed reading width and truncates. */
+.consultation-campaign-picker select {
+  max-width: 150px;
+}
+
+/* Open, the toggle tucks into the sidebar's own top-right corner: outside it would sit
+   on the breadcrumb, and where it started it covered the wordmark. */
+.menu-toggle.is-open {
+  left: 186px;
+  top: 26px;
+  width: 34px;
+  height: 34px;
+  background: var(--surface-3);
+  border-color: transparent;
+}
+.menu-toggle.is-open:hover {
+  background: var(--control-hover);
+  border-color: var(--control-line-hover);
+}
+
+/* Icon-only controls lighten rather than grow a plate behind them, for the same reason
+   the nav caret does: on dark surfaces the plate competes with the glyph. */
+.icon-button:hover:not(:disabled),
+.icon-button:focus-visible {
+  background: none;
+  color: var(--brand-strong);
+}
+
+.field-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.field-help {
+  display: inline-flex;
+  color: var(--text-dim);
+  cursor: help;
+  transition: color var(--motion-duration) var(--motion-ease);
+}
+.field-help:hover,
+.field-help:focus-visible {
+  color: var(--brand-strong);
+  outline: none;
+}
+
+.breadcrumb a {
+  color: inherit;
+  border-radius: 6px;
+  padding: 2px 4px;
+  transition: color var(--motion-duration) var(--motion-ease);
+}
+.breadcrumb a:hover {
+  color: var(--text);
+}
+.breadcrumb-caret {
+  color: var(--text-dim);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.breadcrumb:hover .breadcrumb-caret {
+  transform: translateX(2px);
+  color: var(--text-muted);
+}
+
+/* The sidebar mark is the product name, matching the public header exactly: one word
+   with the suffix in the brand colour, inline rather than stacked. */
+.sidebar .wordmark {
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+.sidebar .wordmark strong {
+  display: inline;
+  font-size: inherit;
+  letter-spacing: inherit;
+  margin: 0 0 0 2px;
+  color: var(--brand);
+}
+
+/* Studio actions use the same cursor-following glow as the public client cards. */
+.app-shell .button.primary {
+  background: var(--control-background);
+  border-color: var(--control-line);
+  color: var(--text);
+  box-shadow: none;
+}
+.app-shell .button:not(.warning):not(.action-danger):not(.text-red-700):hover:not(:disabled) {
+  background: var(--control-background);
+  border-color: var(--control-line);
+  color: var(--text);
+  box-shadow: none;
+  transform: none;
+}
+.button.studio-spotlight,
+.button.primary.studio-spotlight {
+  --spotlight-radius: 90px;
+  --spotlight-color: color-mix(in srgb, var(--brand) 35%, transparent);
+}
+.button.studio-spotlight:hover:not(:disabled),
+.button.primary.studio-spotlight:hover:not(:disabled) {
+  background: var(--control-background);
+  border-color: var(--control-line);
+  color: var(--text);
+  box-shadow: none;
+  transform: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar .nav-child {
+    animation: studio-nav-enter 160ms ease-out;
+  }
+  .action-menu-portal {
+    animation: studio-nav-enter 140ms ease-out;
+  }
+}
+@keyframes studio-nav-enter {
+  from {
+    opacity: 0;
+    translate: 0 -4px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}

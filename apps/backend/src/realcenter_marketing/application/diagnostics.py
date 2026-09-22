@@ -32,8 +32,12 @@ def report(run_id, events, usage, outputs):
     if not failures:
         return None
     last = failures[-1]
-    recovered = any(e.get('event') == 'repair_completed' and e.get('agent') == last.get('agent')
-                    and e.get('time', '') > last.get('time', '') for e in events)
+    # Ordered by position, not by timestamp: a repair that finishes inside the same clock
+    # tick as the failure carries an identical ISO string, and a strict > then reported a
+    # recovered run as unrecovered. The journal is append-only, so index is the truth.
+    last_index = len(events) - 1 - events[::-1].index(last)
+    recovered = any(event.get('event') == 'repair_completed' and event.get('agent') == last.get('agent')
+                    for event in events[last_index + 1:])
     validation = next((e for e in reversed(failures) if e.get('validation_errors') and e.get('agent') == last.get('agent')), {})
     response = next((e for e in reversed(events) if e.get('event') == 'response_received' and e.get('agent') == last.get('agent')), {})
     saved = [role for role in ('social_media', 'copywriter', 'creative', 'marketing_director', 'campaign') if role in outputs]

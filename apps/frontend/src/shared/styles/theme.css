@@ -1,0 +1,330 @@
+/* Dark theme: one consistent surface palette across campaign screens. */
+:root {
+  color-scheme: dark;
+  color: var(--text);
+  background: var(--surface-0);
+}
+.sidebar {
+  background: var(--surface-0);
+  border-right: 1px solid var(--line);
+  color: var(--text);
+}
+.topbar {
+  background: var(--surface-1);
+  border-color: var(--line);
+}
+.user-avatar {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+.panel,
+.agent {
+  background: var(--surface-2);
+  border-color: var(--line);
+}
+.badge {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.hero {
+  background: var(--brand-wash);
+  border-color: var(--brand-line);
+}
+.hero h1 {
+  color: var(--text);
+}
+.hero h1 em {
+  color: var(--brand-soft);
+}
+.hero p:last-child {
+  color: var(--brand-soft);
+}
+.eyebrow {
+  color: var(--brand-soft);
+}
+.orbit {
+  border-color: var(--brand-line);
+}
+.hero-sticker {
+  background: var(--brand-soft);
+  box-shadow: 9px 9px var(--brand-wash);
+}
+.floating-tag {
+  background: var(--brand-wash);
+  border-color: var(--brand-line);
+  color: var(--brand-soft);
+}
+.muted {
+  color: var(--text-muted);
+}
+.field-label small {
+  color: var(--text-muted);
+}
+.step {
+  background: var(--brand-wash);
+  color: var(--brand-soft);
+}
+textarea,
+select,
+input:not([type='checkbox']):not([type='file']) {
+  background: var(--field-background);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+textarea::placeholder {
+  color: var(--text-muted);
+}
+.divider {
+  background: var(--line);
+}
+.suggestion {
+  border-color: var(--brand-line);
+  color: var(--brand-soft);
+  background: var(--brand-wash);
+}
+.upload {
+  background: var(--surface-1);
+  border-color: var(--line-strong);
+  color: var(--text-muted);
+}
+.upload.has-file {
+  background: var(--brand-wash);
+  border-color: var(--brand-line);
+}
+.upload strong {
+  color: var(--text);
+}
+.button {
+  background: var(--surface-3);
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+.button:hover {
+  background: var(--surface-3);
+}
+.button.primary {
+  background: var(--brand-muted);
+  border-color: var(--brand-muted);
+  color: var(--brand-contrast);
+}
+.button.primary:hover {
+  background: var(--brand-soft);
+}
+.hint {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.error {
+  background: var(--danger-surface);
+  border-color: var(--danger-line);
+  color: var(--danger-text);
+}
+.process > span {
+  border-color: var(--line-strong);
+  color: var(--text);
+}
+.process p {
+  color: var(--text-muted);
+}
+.run-row:hover {
+  background: var(--surface-3);
+}
+.run-icon {
+  background: var(--brand-wash);
+  color: var(--brand-soft);
+}
+.agent.working {
+  background: var(--brand-wash);
+  border-color: var(--brand-line);
+}
+.agent-icon {
+  background: var(--surface-3);
+  color: var(--text);
+}
+.agent p {
+  color: var(--text-muted);
+}
+.agent small {
+  color: var(--text);
+}
+.dot {
+  background: var(--text-dim);
+}
+.result-image,
+.gallery img {
+  background: var(--surface-0);
+}
+.image-empty {
+  background: var(--surface-1);
+  border-color: var(--line-strong);
+  color: var(--text-muted);
+}
+.image-empty strong {
+  color: var(--text);
+}
+.image-empty p {
+  color: var(--text-muted);
+}
+.caption {
+  background: var(--surface-0);
+  color: var(--text);
+}
+.tabs {
+  border-color: var(--line);
+}
+.tabs button {
+  color: var(--text-muted);
+}
+.tabs button.selected {
+  background: var(--brand-wash);
+  color: var(--brand-soft);
+}
+.nested {
+  background: var(--surface-1);
+  border-color: var(--line-strong);
+}
+.event {
+  border-color: var(--line);
+}
+.event time,
+.event span {
+  color: var(--text-muted);
+}
+footer {
+  color: var(--text-muted);
+}
+.text-slate-900 {
+  color: var(--text) !important;
+}
+.text-slate-500 {
+  color: var(--text-muted) !important;
+}
+.text-orange-700 {
+  color: var(--brand-soft) !important;
+}
+.text-red-700 {
+  color: var(--danger-text) !important;
+}
+.text-emerald-600 {
+  color: var(--success-text) !important;
+}
+.text-orange-600 {
+  color: var(--brand-soft) !important;
+}
+.bg-red-50 {
+  background: var(--danger-surface) !important;
+  color: var(--danger-text);
+}
+.bg-slate-50 {
+  background: var(--surface-0) !important;
+}
+.divide-slate-100 > :not(:last-child) {
+  border-color: var(--line) !important;
+}
+.cost-card {
+  border-color: var(--brand-line);
+  background: linear-gradient(135deg, var(--brand-wash), var(--surface-2));
+}
+.cost-heading,
+.cost-title {
+  display: flex;
+  align-items: center;
+}
+.cost-heading {
+  justify-content: space-between;
+  gap: 16px;
+}
+.cost-title {
+  gap: 12px;
+}
+.cost-title > svg {
+  color: var(--brand-soft);
+}
+.cost-title p:not(.eyebrow) {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+.cost-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.cost-grid > div {
+  background: var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 15px;
+  display: grid;
+  gap: 5px;
+}
+.cost-grid span,
+.cost-grid small {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.cost-grid strong {
+  font-size: 15px;
+  color: var(--text);
+}
+.cost-details {
+  margin-top: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 13px;
+}
+.cost-details summary {
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--text);
+}
+.cost-details > div {
+  display: grid;
+  grid-template-columns: 1fr 120px 110px;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+}
+.cost-details > div span:nth-child(2) {
+  color: var(--text-muted);
+}
+.cost-details > div strong {
+  text-align: right;
+}
+.cost-note {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-top: 14px;
+}
+@media (max-width: 760px) {
+  .cost-grid {
+    grid-template-columns: 1fr;
+  }
+  .cost-details > div {
+    grid-template-columns: 1fr auto;
+  }
+  .cost-details > div span:nth-child(2) {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar nav {
+    flex-wrap: wrap;
+  }
+}
+
+.brief-dialog {
+  color: var(--text);
+  width: min(760px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow: auto;
+  margin: auto;
+}
+.brief-dialog::backdrop {
+  background: var(--backdrop);
+  backdrop-filter: blur(4px);
+}

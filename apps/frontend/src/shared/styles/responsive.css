@@ -1,0 +1,238 @@
+/* Responsive layout and image revision dialog. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+img {
+  max-width: 100%;
+}
+svg {
+  flex-shrink: 0;
+}
+h1,
+h2,
+h3,
+p,
+summary,
+figcaption,
+.event {
+  overflow-wrap: anywhere;
+}
+.grid > * {
+  min-width: 0;
+}
+.panel .flex > div {
+  min-width: 0;
+}
+.panel pre {
+  max-width: 100%;
+  overflow: auto;
+}
+.button {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.panel > .flex {
+  flex-wrap: wrap;
+}
+.hint {
+  min-width: 0;
+}
+.run-row > button {
+  min-width: 0;
+}
+.run-row .campaign-actions {
+  max-width: 100%;
+}
+.cost-heading,
+.cost-title {
+  flex-wrap: wrap;
+}
+.cost-details > div {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 120px) minmax(0, 110px);
+}
+.revision-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr);
+  gap: 20px;
+}
+.revision-preview {
+  width: 100%;
+  height: 280px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--surface-0);
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.brief-dialog {
+  max-height: calc(100dvh - 32px);
+  overscroll-behavior: contain;
+}
+.brief-dialog .caption {
+  min-height: 0;
+}
+@media (max-width: 1023px) {
+  .hero-art {
+    display: none;
+  }
+  .hero {
+    min-height: 0;
+  }
+  .workspace main {
+    padding: 24px;
+  }
+  .topbar {
+    gap: 12px;
+  }
+  .topbar > div {
+    min-width: 0;
+  }
+  .run-row > button {
+    flex-wrap: wrap;
+  }
+  .run-row > button > div {
+    flex-basis: 65%;
+  }
+}
+@media (max-width: 760px) {
+  .sidebar nav {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .sidebar nav :is(button, a) {
+    font-size: 12px;
+    min-height: 44px;
+  }
+  .topbar {
+    height: auto;
+    min-height: 60px;
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+  .workspace main {
+    padding: 20px 16px;
+  }
+  .hero {
+    padding: 24px;
+  }
+  .panel.p-6,
+  .panel.p-8 {
+    padding: 20px;
+  }
+  .cost-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cost-details > div {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .cost-details > div span:nth-child(2) {
+    display: none;
+  }
+  .button,
+  .tabs button {
+    min-height: 44px;
+  }
+  .tabs {
+    gap: 4px;
+  }
+  .tabs button {
+    padding: 8px 10px;
+  }
+  .mode-label {
+    width: 100%;
+  }
+  textarea,
+  select,
+  input:not([type='checkbox']):not([type='file']) {
+    font-size: 16px;
+  }
+  .revision-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .revision-preview {
+    height: 200px;
+  }
+  .brief-dialog {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+    padding: 18px;
+  }
+  .modal-actions > .button {
+    flex: 1;
+  }
+  .agent {
+    padding: 14px;
+  }
+  .agent strong {
+    font-size: 12px;
+  }
+  .page-title {
+    gap: 16px;
+  }
+  .cost-heading {
+    align-items: flex-start;
+  }
+  .event {
+    gap: 8px;
+  }
+  .event span {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 480px) {
+  .gallery {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .gallery img {
+    height: auto;
+    max-height: 380px;
+    min-height: 160px;
+  }
+  .hero h1 {
+    font-size: 29px;
+  }
+  .workspace main {
+    padding: 16px 12px;
+  }
+  .panel.p-6,
+  .panel.p-8 {
+    padding: 16px;
+  }
+  .nested {
+    padding: 10px;
+  }
+  .topbar .user-avatar {
+    display: none;
+  }
+  .run-row {
+    padding: 14px;
+  }
+  .run-row > button {
+    gap: 10px;
+  }
+  .run-row > button > div {
+    flex-basis: 100%;
+  }
+  .run-row .campaign-actions {
+    width: auto;
+    margin-left: auto;
+  }
+  .cost-title {
+    gap: 8px;
+  }
+  .revision-preview {
+    height: 160px;
+  }
+  .page-title h1 {
+    font-size: 30px;
+  }
+}

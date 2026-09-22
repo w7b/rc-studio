@@ -7,11 +7,7 @@
     "Orquestração",
     "Revisão"
   ],
-  "allowed_tools": [
-    "consult_social_media",
-    "consult_copywriter",
-    "consult_creative"
-  ],
+  "allowed_tools": [],
   "restrictions": [
     "no_sgcloud_write",
     "no_price_lookup",
@@ -21,4 +17,3 @@
     "no_fabricated_facts"
   ]
 }
-

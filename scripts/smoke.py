@@ -8,9 +8,12 @@ from pathlib import Path
 from urllib.request import Request, urlopen
 
 from realcenter_marketing.presentation.http.server import make_server
+from realcenter_marketing.infrastructure.identity.database import SCHEMA
 
 
 def main():
+    # Editable installs find this next to the source; wheels must package it too.
+    assert SCHEMA.is_file(), 'O pacote instalado não inclui o schema de identidade'
     with tempfile.TemporaryDirectory(prefix='realcenter-smoke-') as directory:
         root = Path(directory)
         (root / 'brand').mkdir()
@@ -44,9 +47,9 @@ def main():
             assert urlopen(base + f'/api/runs/{run_id}/files/legenda-feed.txt', timeout=10).status == 200
             assert len(get('/api/formats')) == 6
             assert get('/api/references') == []
-            server.catalog.close()
-            assert get('/api/system')['status'] == 'ready', get('/api/system')
-            print('PASS: static assets, HTTP contracts, demo agents, saved outputs, downloads and Graphify; no provider calls.')
+            logs = get('/api/logs')
+            assert logs['scope'] == 'local' and logs['entries'], logs
+            print('PASS: static assets, HTTP contracts, demo agents, saved outputs, downloads and logs; no provider calls.')
         finally:
             server.shutdown()
             server.server_close()

@@ -1,5 +1,6 @@
 import hashlib
 import json
+import threading
 import re
 from pathlib import Path
 from realcenter_marketing.application.diagnostics import report
@@ -25,7 +26,7 @@ def run_directory(root, run_id):
 
 
 def media_catalog(root):
-    candidates = list((root / 'brand' / 'products' / 'reference-only').rglob('*'))
+    candidates = list((root / 'brand' / 'products').rglob('*'))
     candidates += list((root / 'campaigns').glob('*/assets/*'))
     candidates += list((root / 'campaigns' / 'runs').glob('run-*/*.png'))
     candidates += list((root / 'campaigns' / 'runs').glob('run-*/product.jpg'))
@@ -41,13 +42,72 @@ def media_catalog(root):
             continue
         relative = path.relative_to(root).as_posix()
         key = hashlib.sha256(relative.encode()).hexdigest()[:24]
+        metadata = read_json(root / 'campaigns/references' / f'{path.stem}.json', {}) if relative.startswith('brand/products/') else {}
+        title = metadata.get('title', path.name) if isinstance(metadata, dict) else path.name
         result[key] = {'path': path, 'id': key, 'name': path.name, 'url': '/media/' + key,
+                       'title': title,
                        'product': relative.startswith('brand/products/'), 'run_id': path.parent.name,
                        'created_at': path.stat().st_mtime}
     return result
 
 
+_SNAPSHOT_CACHE = {}
+_SNAPSHOT_GUARD = threading.Lock()
+
+
+def _runs_fingerprint(root):
+    """Cheap stand-in for 'has anything changed': the run directory's own mtime plus the
+    mtime of each run folder. Directory stats are one syscall each; reading every
+    events.jsonl is hundreds."""
+    runs = root / 'campaigns' / 'runs'
+    try:
+        entries = sorted(runs.iterdir())
+    except OSError:
+        return None
+    stamps = [runs.stat().st_mtime]
+    for entry in entries[-60:]:
+        try:
+            stamps.append(entry.stat().st_mtime)
+            # The journal is appended to, and appending to an existing file does not
+            # touch the parent directory mtime on every platform. Without its size and
+            # mtime the cache would keep serving a finished run as still running.
+            journal = entry / 'events.jsonl'
+            status = journal.stat()
+            stamps.append(status.st_mtime)
+            stamps.append(status.st_size)
+        except OSError:
+            continue
+        try:
+            # Same reasoning as the journal: a rename replaces an existing file, which
+            # need not touch the parent directory's mtime, and the cache would keep
+            # serving the previous name.
+            renamed = (entry / 'title.json').stat()
+            stamps.append(renamed.st_mtime)
+            stamps.append(renamed.st_size)
+        except OSError:
+            pass
+    return (len(entries), tuple(stamps))
+
+
 def snapshot(root, active_id=None):
+    """Memoised by directory mtime.
+
+    The frontend polls this every two seconds per open tab, and each call used to read
+    every events.jsonl of up to fifty runs plus seven globs. With a handful of stores that
+    is continuous disk traversal and JSON parsing holding the GIL — it is the first thing
+    that gives way under load, well before campaign execution does.
+    """
+    fingerprint = _runs_fingerprint(root)
+    key = str(root)
+    if fingerprint is not None:
+        with _SNAPSHOT_GUARD:
+            cached = _SNAPSHOT_CACHE.get(key)
+        if cached and cached[0] == fingerprint:
+            # active_id only decides a status label, so it is applied to the cached rows
+            # instead of rebuilding everything.
+            return [{**run, 'status': 'running' if run['id'] == active_id
+                     else ('interrupted' if run['status'] == 'running' else run['status'])}
+                    for run in cached[1]]
     result = []
     media = list(media_catalog(root).values())
     directories = sorted((root / 'campaigns' / 'runs').glob('run-*'), key=lambda p: p.name)
@@ -67,10 +127,15 @@ def snapshot(root, active_id=None):
         usage = read_json(directory / 'usage.json')
         last = events[-1] if events else {}
         status = 'running' if directory.name == active_id else 'completed' if last.get('event') == 'run_completed' else 'failed' if last.get('event') in ('failed', 'run_failed', 'image_failed') else 'interrupted'
-        result.append({'id': directory.name, 'events': events, 'outputs': outputs, 'usage': usage, 'status': status,
+        titled = read_json(directory / 'title.json') or {}
+        result.append({'id': directory.name, 'title': titled.get('title'),
+                       'events': events, 'outputs': outputs, 'usage': usage, 'status': status,
                        'diagnostics': report(directory.name, events, usage, outputs),
                        'inputs': [{k: m[k] for k in ('id', 'name', 'url')} for m in media if m['run_id'] == directory.name and m['name'].startswith(('product.', 'reference.', 'brand-reference.', 'brand-reference-'))],
                        'images': [{k: m[k] for k in ('id', 'name', 'url', 'created_at')} for m in sorted(media, key=lambda x: (x['created_at'], x['id'])) if m['run_id'] == directory.name and m['name'].startswith(('feed-', 'story-', 'carousel-', 'reel_cover-'))]})
+    if fingerprint is not None:
+        with _SNAPSHOT_GUARD:
+            _SNAPSHOT_CACHE[key] = (fingerprint, result)
     return result
 
 from uuid import uuid4

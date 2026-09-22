@@ -1,15 +1,19 @@
+import Form from '../../shared/components/Form.jsx';
 import React, { useEffect, useState } from 'react';
 import { Download, Images, Link, LoaderCircle, ArrowRight } from 'lucide-react';
 import { api, post, fileData } from '../../shared/api/client.js';
 import UploadField from '../../shared/components/UploadField.jsx';
+import ReferenceEditor from './ReferenceEditor.jsx';
+import DeleteImageButton from '../library/DeleteImageButton.jsx';
 
-const labels = { feed: 'Feed', story: 'Story', youtube: 'YouTube' };
+const labels = { feed: 'Feed', story: 'Story', youtube: 'YouTube', product: 'Produto' };
 
-export default function References({ token, connected, onUse }) {
+export default function References({ token, connected, onUse, onSaved }) {
+  const productMode = new URLSearchParams(window.location.search).get('type') === 'product';
   const [items, setItems] = useState([]),
     [loading, setLoading] = useState(true);
-  const [mode, setMode] = useState('link'),
-    [kind, setKind] = useState('feed');
+  const [mode, setMode] = useState(productMode ? 'file' : 'link'),
+    [kind, setKind] = useState(productMode ? 'product' : 'feed');
   const [url, setUrl] = useState(''),
     [title, setTitle] = useState(''),
     [file, setFile] = useState(null);
@@ -35,6 +39,7 @@ export default function References({ token, connected, onUse }) {
   }, []);
   async function submit(event) {
     event.preventDefault();
+    if (busy || editorBusy) return;
     setBusy(true);
     setError('');
     setMessage('');
@@ -54,7 +59,12 @@ export default function References({ token, connected, onUse }) {
       setUrl('');
       setFile(null);
       setTitle('');
-      setMessage('Referência salva. Você já pode baixar ou usar na campanha.');
+      setMessage(
+        kind === 'product'
+          ? 'Imagem de produto salva no Brand Kit e disponível na Biblioteca.'
+          : 'Referência salva. Você já pode baixar ou usar na campanha.'
+      );
+      await onSaved?.();
     } catch (e) {
       setError(e.message);
     } finally {
@@ -63,6 +73,7 @@ export default function References({ token, connected, onUse }) {
   }
   async function use(item) {
     setError('');
+    if (busy || editorBusy) return;
     setBusy(true);
     try {
       await onUse(item);
@@ -72,20 +83,61 @@ export default function References({ token, connected, onUse }) {
       setBusy(false);
     }
   }
+  const [editingId, setEditingId] = useState('');
+  const [editorBusy, setEditorBusy] = useState(false);
+  function edit(item) {
+    setEditingId(item.id);
+    document.getElementById('reference-editor-heading')?.focus({ preventScroll: true });
+    document.getElementById('reference-editor')?.scrollIntoView({
+      behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ? 'instant'
+        : 'smooth',
+      block: 'start',
+    });
+  }
+  async function saveEdit(item) {
+    setItems((current) => [item, ...current.filter((existing) => existing.id !== item.id)]);
+    setFilter('all');
+    await onSaved?.(item);
+  }
   const visible = items.filter((item) => filter === 'all' || item.kind === filter);
+  function deleted(item) {
+    setItems((current) => current.filter((entry) => entry.id !== item.id));
+    if (editingId === item.id) setEditingId('');
+    setMessage(`“${item.title}” apagada da biblioteca.`);
+    setError('');
+    onSaved?.();
+    requestAnimationFrame(() => document.getElementById('references-heading')?.focus());
+  }
   return (
     <>
       <div className="page-title">
         <div>
           <p className="eyebrow">SEU REPERTÓRIO CRIATIVO</p>
-          <h1>Referências</h1>
+          <h1 id="references-heading" tabIndex={-1}>
+            Referências
+          </h1>
           <p className="muted mt-3">
             Encontre uma ideia. Salve a imagem. Inspire sua próxima campanha.
           </p>
         </div>
-        <span className="badge">{items.length} imagens salvas</span>
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="badge">{items.length} imagens salvas</span>
+          <button
+            type="button"
+            className="button"
+            disabled={busy || editorBusy}
+            onClick={() => {
+              setMode('file');
+              setKind('product');
+              document.getElementById('reference-import')?.scrollIntoView({ block: 'start' });
+            }}
+          >
+            <Images size={16} /> Enviar imagem de produto
+          </button>
+        </div>
       </div>
-      <form className="panel p-6 space-y-5 mb-6" onSubmit={submit}>
+      <Form id="reference-import" noValidate className="panel p-6 space-y-5 mb-6" onSubmit={submit}>
         <div className="tabs" role="group" aria-label="Forma de importar">
           {[
             ['link', 'Colar link'],
@@ -94,9 +146,12 @@ export default function References({ token, connected, onUse }) {
             <button
               type="button"
               key={value}
-              disabled={busy}
+              disabled={busy || editorBusy}
               className={mode === value ? 'selected' : ''}
-              onClick={() => setMode(value)}
+              onClick={() => {
+                setMode(value);
+                if (value === 'link' && kind === 'product') setKind('feed');
+              }}
             >
               {label}
             </button>
@@ -105,12 +160,18 @@ export default function References({ token, connected, onUse }) {
         <div className="grid sm:grid-cols-2 gap-4">
           <label>
             <span className="field-label">Tipo de referência</span>
-            <select disabled={busy} value={kind} onChange={(e) => setKind(e.target.value)}>
-              {Object.entries(labels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
+            <select
+              disabled={busy || editorBusy}
+              value={kind}
+              onChange={(e) => setKind(e.target.value)}
+            >
+              {Object.entries(labels)
+                .filter(([value]) => mode === 'file' || value !== 'product')
+                .map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
             </select>
           </label>
           <label>
@@ -119,10 +180,14 @@ export default function References({ token, connected, onUse }) {
             </span>
             <input
               maxLength={120}
-              disabled={busy}
+              disabled={busy || editorBusy}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex.: composição para oferta de fim de semana"
+              placeholder={
+                kind === 'product'
+                  ? 'Ex.: café torrado 500 g'
+                  : 'Ex.: composição para oferta de fim de semana'
+              }
             />
           </label>
         </div>
@@ -135,7 +200,7 @@ export default function References({ token, connected, onUse }) {
               type="url"
               required
               maxLength={2048}
-              disabled={busy}
+              disabled={busy || editorBusy}
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder={
@@ -146,24 +211,44 @@ export default function References({ token, connected, onUse }) {
             />
           </label>
         ) : (
-          <UploadField label="Imagem de referência" file={file} onChange={setFile} />
+          <UploadField
+            label={kind === 'product' ? 'Imagem do produto' : 'Imagem de referência'}
+            file={file}
+            onChange={setFile}
+          />
         )}
         <p className="muted text-xs">
-          {kind === 'youtube'
-            ? 'Busca a maior thumbnail disponível do vídeo.'
-            : kind === 'story'
-              ? 'Para Stories, envie o arquivo salvo ou o link direto da imagem. Links de Stories do Instagram exigem login.'
-              : 'Importa a prévia pública do Instagram ou uma imagem por link direto. Carrosséis importam somente a capa disponível.'}{' '}
+          {kind === 'product'
+            ? 'A imagem será guardada como produto da loja no Brand Kit e aparecerá na Biblioteca. '
+            : kind === 'youtube'
+              ? 'Busca a maior thumbnail disponível do vídeo.'
+              : kind === 'story'
+                ? 'Para Stories, envie o arquivo salvo ou o link direto da imagem. Links de Stories do Instagram exigem login.'
+                : 'Importa a prévia pública do Instagram ou uma imagem por link direto. Carrosséis importam somente a capa disponível.'}{' '}
           PNG ou JPEG, até 8 MB. Se a origem bloquear o acesso, use Enviar arquivo.
         </p>
         <button
           className="button primary"
-          disabled={busy || !token || !connected || (mode === 'file' && !file)}
+          disabled={busy || editorBusy || !token || !connected || (mode === 'file' && !file)}
         >
           {busy ? <LoaderCircle className="animate-spin" size={16} /> : <Link size={16} />}{' '}
-          {busy ? 'Importando…' : 'Salvar referência'}
+          {busy
+            ? 'Importando…'
+            : kind === 'product'
+              ? 'Salvar imagem de produto'
+              : 'Salvar referência'}
         </button>
-      </form>
+      </Form>
+      <ReferenceEditor
+        items={items}
+        selectedId={editingId}
+        onSelect={setEditingId}
+        token={token}
+        connected={connected}
+        busy={busy}
+        onBusy={setEditorBusy}
+        onSaved={saveEdit}
+      />
       {error && (
         <p className="error mb-5" role="alert">
           {error}
@@ -198,7 +283,7 @@ export default function References({ token, connected, onUse }) {
                 <span className="badge">{labels[item.kind]}</span>
                 <h2 className="text-sm break-words">{item.title}</h2>
                 <p className="muted text-xs">
-                  {item.width} × {item.height} px · {item.extension.toUpperCase()}
+                  {item.width} × {item.height} px · {(item.extension || 'png').toUpperCase()}
                 </p>
                 {item.source && (
                   <a
@@ -211,6 +296,14 @@ export default function References({ token, connected, onUse }) {
                   </a>
                 )}
                 <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="button small"
+                    disabled={busy || editorBusy}
+                    onClick={() => edit(item)}
+                  >
+                    Editar
+                  </button>
                   <a
                     className="button small"
                     href={'/api/references/' + item.id + '/download'}
@@ -220,11 +313,19 @@ export default function References({ token, connected, onUse }) {
                   </a>
                   <button
                     className="button small"
-                    disabled={busy || !connected}
+                    disabled={busy || editorBusy || !connected}
                     onClick={() => use(item)}
                   >
                     Usar na campanha <ArrowRight size={14} />
                   </button>
+                  <DeleteImageButton
+                    item={item}
+                    source="references"
+                    token={token}
+                    disabled={busy || editorBusy || !connected}
+                    onBusy={setBusy}
+                    onDeleted={deleted}
+                  />
                 </div>
               </figcaption>
             </figure>

@@ -12,7 +12,8 @@ from PIL import Image
 from realcenter_marketing.bootstrap import model_catalog
 from realcenter_marketing.bootstrap.campaigns import create_campaign
 from realcenter_marketing.bootstrap.model_catalog import (
-    FLUX_DEV, KIMI_K3, flux_canvas, image_models, resolve_image, resolve_text, text_models,
+    FLUX_DEV, KIMI_K3, NEMOTRON_ULTRA, QWEN_IMAGE, QWEN_TEXT, flux_canvas, image_models,
+    qwen_canvas, resolve_image, resolve_text, text_models,
 )
 from realcenter_marketing.bootstrap.settings import Settings
 from realcenter_marketing.domain.campaigns import CampaignBrief
@@ -21,8 +22,10 @@ from realcenter_marketing.infrastructure import image_backends
 
 def test_catalog_offers_both_providers_and_keeps_openai_default(settings):
     settings.model = 'fixture-model'
-    assert [option.id for option in text_models(settings)] == ['openai:fixture-model', KIMI_K3.id]
-    assert [option.id for option in image_models(settings)] == ['openai:gpt-image-2', FLUX_DEV.id]
+    assert [option.id for option in text_models(settings)] == [
+        'openai:fixture-model', NEMOTRON_ULTRA.id, KIMI_K3.id, QWEN_TEXT.id]
+    assert [option.id for option in image_models(settings)] == [
+        'openai:gpt-image-2', FLUX_DEV.id, QWEN_IMAGE.id]
     # No explicit choice keeps the previous behaviour, never a silent switch of provider.
     assert resolve_text(settings, None).model == 'fixture-model'
     assert resolve_image(settings, None).model == 'gpt-image-2'
@@ -66,7 +69,7 @@ def test_kimi_reaches_every_specialist_through_the_nvidia_endpoint(settings, dem
     settings.model = 'fixture-model'
     result = asyncio.run(create_campaign(CampaignBrief(request='Campanha'), settings, option=KIMI_K3))
     assert result.execution_mode == 'live'
-    assert set(seen_models) == {'moonshotai/kimi-k3'} and len(seen_models) == 7
+    assert set(seen_models) == {'moonshotai/kimi-k3'} and len(seen_models) == 5
     assert seen_provider == {'api_key': 'nvapi-fixture',
                              'base_url': model_catalog.NVIDIA_TEXT_URL,
                              'use_responses': False}
@@ -81,6 +84,55 @@ def test_flux_only_covers_the_square_export():
     assert flux.canvas('1088x1088', 1080, 1080) == '1088x1088'
     with pytest.raises(image_backends.ImageBackendError, match='1344'):
         flux.canvas('1152x2048', 1080, 1920)
+
+
+def test_qwen_image_covers_more_exports_than_flux_but_not_the_45_feed():
+    """Pinned to the seven resolutions the Qwen-Image-2.1 card documents.
+
+    It reaches the square, the 3:4 and the story, which FLUX cannot, but it has no 4:5
+    and no 1536x800, so those are refused instead of upscaled from a smaller frame.
+    """
+    assert qwen_canvas(1080, 1080) == (2048, 2048)
+    assert qwen_canvas(1152, 1536) == (1792, 2400)
+    assert qwen_canvas(1080, 1920) == (1536, 2752)
+    assert qwen_canvas(1080, 1350) is None
+    assert qwen_canvas(1536, 800) is None
+    qwen = image_backends.backend_for(QWEN_IMAGE, api_key='k', base_url='http://x')
+    assert qwen.canvas('1088x1088', 1080, 1080) == '2048x2048'
+    with pytest.raises(image_backends.ImageBackendError, match='feed alto'):
+        qwen.canvas('1152x1440', 1080, 1350)
+
+
+def test_qwen_image_without_an_endpoint_refuses_instead_of_routing_elsewhere():
+    """No Inference Provider serves this model, so an unset QWEN_IMAGE_URL is fatal and
+    must say so — never fall through to another provider's endpoint."""
+    qwen = image_backends.backend_for(QWEN_IMAGE, api_key='', base_url='')
+    with pytest.raises(image_backends.ImageBackendError, match='QWEN_IMAGE_URL'):
+        qwen.render('arte', '2048x2048', [])
+
+
+def test_qwen_text_is_pinned_to_a_provider_that_honours_strict_schema(settings, demo):
+    """Both halves of this id were measured against the live gateway.
+
+    Novita wraps the answer in a JSON array on every setting tried, which fails strict
+    validation; DeepInfra returns the object. And Qwen ships thinking on at xhigh, which
+    spent the entire completion budget and returned empty content, so every agent in the
+    team must carry the switch that turns it off.
+    """
+    from realcenter_marketing.infrastructure.agents_sdk.team_factory import build_team
+
+    assert QWEN_TEXT.model.endswith(':deepinfra'), 'o provedor de inferência é fixado de propósito'
+    assert QWEN_TEXT.extra_body == {'chat_template_kwargs': {'enable_thinking': False}}
+    team = build_team(settings, model=demo, option=QWEN_TEXT)
+    for agent in (team.planner, team.reviewer, *team.specialists.values()):
+        assert agent.model_settings.extra_body == QWEN_TEXT.extra_body
+
+
+def test_an_unknown_provider_is_refused_rather_than_sent_to_openai():
+    from realcenter_marketing.bootstrap.model_catalog import ModelOption
+    invented = ModelOption('outro:modelo', 'Outro', 'outro', 'modelo')
+    with pytest.raises(image_backends.ImageBackendError, match='renderizador'):
+        image_backends.backend_for(invented)
 
 
 def test_flux_sends_a_valid_request_and_returns_png(settings, monkeypatch):
@@ -147,11 +199,12 @@ def test_every_run_gets_its_own_connection_pool(settings):
         asyncio.run(close_provider(provider))
 
 
-def test_a_model_that_cannot_delegate_is_refused_before_the_run(tmp_path, monkeypatch):
-    """Measured on build.nvidia.com: response_format json_schema drops every tool call.
+def test_a_model_that_cannot_delegate_is_now_accepted(tmp_path, monkeypatch):
+    """The inverse of what this file used to assert, and the point of the pipeline.
 
-    The Director both delegates and returns a validated review, so such a model burns
-    minutes and tokens only to end with an empty outputs set.
+    Kimi was refused because build.nvidia.com drops every tool call once the answer is
+    constrained to a schema. No agent is given a tool any more, so that trade never
+    happens and the model is free to direct a campaign.
     """
     from realcenter_marketing.application.commands import RunRequest
     from realcenter_marketing.bootstrap.services import CampaignService
@@ -160,8 +213,6 @@ def test_a_model_that_cannot_delegate_is_refused_before_the_run(tmp_path, monkey
     monkeypatch.setenv('OPENAI_MODEL', 'fixture-model')
     monkeypatch.setenv('NVIDIA_API_KEY', 'nvapi-fixture')
     service = CampaignService(tmp_path)
-    assert KIMI_K3.delegates is False
-    with pytest.raises(ValueError, match='não delega'):
-        service.validate_live(RunRequest(request='Campanha', model_id=KIMI_K3.id))
-    # The default OpenAI team is untouched by the guard.
+    assert not hasattr(KIMI_K3, 'delegates')
+    service.validate_live(RunRequest(request='Campanha', model_id=KIMI_K3.id))
     service.validate_live(RunRequest(request='Campanha'))

@@ -13,6 +13,7 @@ from realcenter_marketing.infrastructure.image_prompt import (
 )
 from realcenter_marketing.infrastructure.image_backends import backend_for
 from realcenter_marketing.infrastructure.model_catalog import resolve_image
+from realcenter_marketing.infrastructure.resources import load_profile
 
 
 
@@ -20,8 +21,11 @@ def generate_feed(campaign, settings, directory, product=None, client=None, *, c
     publication = campaign.brief.publication
     width, height = publication.dimensions
     option = image_option or resolve_image(settings, None)
+    # Each provider answers for its own image endpoint; the registry knows which.
+    from realcenter_marketing.infrastructure.model_catalog import provider_for
+    provider = provider_for(option.provider)
     backend = backend_for(option, api_key=settings.credential(option.provider),
-                          base_url=getattr(settings, 'nvidia_image_url', ''),
+                          base_url=settings.image_url_for(provider),
                           timeout=settings.timeout_seconds)
     # A canvas >= final dimensions avoids upscaling. Custom sizes are multiples of 16.
     native = {'feed_portrait': '1152x1440', 'feed_square': '1088x1088',
@@ -48,7 +52,9 @@ def generate_feed(campaign, settings, directory, product=None, client=None, *, c
     # photo or a logo that will not reach it.
     attached = ('Preserve a embalagem da foto de produto quando fornecida e use o logo '
                 'de referência. ' if with_references else '')
-    prompt = (f'Crie UMA arte em português para Real Center: {publication.kind}, tela de trabalho {native}, exportação {width}x{height}. '
+    profile = load_profile(settings.project_root)
+    typography = (' ' + profile.fonts) if profile.fonts else ''
+    prompt = (f'Crie UMA arte em português para {profile.described}:{typography} {publication.kind}, tela de trabalho {native}, exportação {width}x{height}. '
               + publication.instructions() + ' Se houver card, produza SOMENTE esse card, nunca uma montagem do carrossel. '
               'Siga o briefing do Creative e a headline e CTA do Copywriter. Use somente fatos confirmados '
               'para produto, preço e condições. Não coloque a legenda inteira na arte. '
@@ -74,7 +80,7 @@ def generate_feed(campaign, settings, directory, product=None, client=None, *, c
         logo = settings.project_root / 'brand' / 'logo' / 'logo.png'
         if logo.exists():
             references.append(stack.enter_context(logo.open('rb')))
-            reference_roles.append('Logo oficial da Real Center')
+            reference_roles.append(f'Logo oficial de {profile.described}')
         sources = []
         if revision_reference:
             references.append(stack.enter_context(revision_reference.open('rb')))
@@ -110,7 +116,7 @@ def generate_feed(campaign, settings, directory, product=None, client=None, *, c
                 card.headline if card else campaign.copywriting.headline,
                 card.cta if card else campaign.copywriting.cta,
                 campaign.creative.visual_direction, publication, brand,
-                option.max_prompt_chars)
+                option.max_prompt_chars, profile.described)
         else:
             prompt, brand_compacted = fit_image_prompt(prompt, brand, reference_roles,
                                                        limit=option.max_prompt_chars)

@@ -41,6 +41,31 @@ def test_thumbnail_fallback(monkeypatch):
     assert source == 'https://www.youtube.com/watch?v=abcdefghijk'
 
 
+def test_uploaded_product_is_in_brand_kit_library_and_can_be_reused(tmp_path):
+    from realcenter_marketing.infrastructure.persistence.filesystem import media_catalog
+    request = refs.ReferenceRequest(kind='product', title='Café 500 g', upload=base64.b64encode(picture()).decode())
+    saved = refs.save_reference(tmp_path, request)
+    assert refs.save_reference(tmp_path, request) == saved
+    path = refs.reference_file(tmp_path, saved['id'])
+    assert path.is_relative_to(tmp_path / 'brand/products')
+    assert path.read_bytes() == picture()
+    products = [entry for entry in media_catalog(tmp_path).values() if entry['product']]
+    assert len(products) == 1
+    assert products[0]['title'] == 'Café 500 g'
+    assert products[0]['path'] == path
+    assert refs.catalog(tmp_path / 'other-store') == []
+    assert media_catalog(tmp_path / 'other-store') == {}
+
+
+def test_product_type_requires_a_real_uploaded_image(tmp_path, monkeypatch):
+    monkeypatch.setattr(refs, 'fetch', lambda *args: pytest.fail('Product uploads must not fetch URLs'))
+    with pytest.raises(ValueError, match='Envie um arquivo'):
+        refs.save_reference(tmp_path, refs.ReferenceRequest(kind='product', url='https://example.test/photo.png'))
+    with pytest.raises(ValueError):
+        refs.save_reference(tmp_path, refs.ReferenceRequest(kind='product', upload=base64.b64encode(b'not an image').decode()))
+    assert not (tmp_path / 'brand/products').exists()
+
+
 @pytest.mark.parametrize('address', ['127.0.0.1', '10.0.0.1', '169.254.169.254', '::1', '::ffff:127.0.0.1'])
 def test_private_dns_is_rejected(monkeypatch, address):
     monkeypatch.setattr(refs.socket, 'getaddrinfo', lambda *a, **k: [(2, 1, 6, '', (address, 443))])
@@ -99,6 +124,108 @@ def test_library_http_persistence_download_and_guards(tmp_path):
         with pytest.raises(HTTPError) as error:
             urlopen(Request(base + '/api/references', headers={'Host': f'evil.test:{server.server_port}'}))
         assert error.value.code == 403
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(2)
+
+
+@pytest.mark.parametrize('kind,endpoint', [('feed', 'references'), ('product', 'references'), ('product', 'media')])
+def test_delete_library_image_moves_image_and_metadata_to_trash(tmp_path, kind, endpoint):
+    from realcenter_marketing.infrastructure.queries import LocalStudioQueries
+    from realcenter_marketing.infrastructure.persistence.filesystem import media_catalog
+    saved = refs.save_reference(tmp_path, refs.ReferenceRequest(kind=kind, title='Imagem', upload=base64.b64encode(picture()).decode()))
+    image = refs.reference_file(tmp_path, saved['id'])
+    copied_input = tmp_path / 'campaigns/runs' / ('run-' + '1' * 32) / 'product.png'
+    copied_input.parent.mkdir(parents=True)
+    copied_input.write_bytes(picture())
+    key = saved['id'] if endpoint == 'references' else next(key for key, item in media_catalog(tmp_path).items() if item['product'])
+    LocalStudioQueries(tmp_path).delete_image(key, endpoint)
+    assert not image.exists()
+    assert refs.catalog(tmp_path) == []
+    assert not [item for item in media_catalog(tmp_path).values() if item['product']]
+    assert copied_input.read_bytes() == picture()
+    assert next((tmp_path / '.trash/library').rglob(image.name)).read_bytes() == picture()
+    assert next((tmp_path / '.trash/library').rglob(saved['id'] + '.json')).is_file()
+    with pytest.raises(ValueError):
+        LocalStudioQueries(tmp_path).delete_image(key, endpoint)
+
+
+def test_delete_artwork_preserves_campaign_and_rejects_input_or_unknown_ids(tmp_path):
+    from realcenter_marketing.infrastructure.queries import LocalStudioQueries
+    from realcenter_marketing.infrastructure.persistence.filesystem import media_catalog, snapshot
+    directory = tmp_path / 'campaigns/runs' / ('run-' + '2' * 32)
+    directory.mkdir(parents=True)
+    (directory / 'feed-1.png').write_bytes(picture())
+    (directory / 'product.png').write_bytes(picture())
+    (directory / 'brief.json').write_text('{"request":"Manter campanha"}', encoding='utf-8')
+    catalog = {item['name']: key for key, item in media_catalog(tmp_path).items()}
+    assert len(snapshot(tmp_path)[0]['images']) == 1
+    queries = LocalStudioQueries(tmp_path)
+    for key in ('../outside', 'unknown', catalog['product.png']):
+        with pytest.raises(ValueError):
+            queries.delete_image(key, 'media')
+    queries.delete_image(catalog['feed-1.png'], 'media')
+    assert snapshot(tmp_path)[0]['images'] == []
+    assert (directory / 'brief.json').is_file()
+    assert (directory / 'product.png').is_file()
+
+
+def test_delete_reference_rolls_back_if_metadata_cannot_move(tmp_path, monkeypatch):
+    from pathlib import Path
+    from realcenter_marketing.infrastructure.queries import LocalStudioQueries
+    saved = refs.save_reference(tmp_path, refs.ReferenceRequest(upload=base64.b64encode(picture()).decode()))
+    image = refs.reference_file(tmp_path, saved['id'])
+    metadata = tmp_path / 'campaigns/references' / (saved['id'] + '.json')
+    rename = Path.rename
+    def fail_metadata(path, target):
+        if path == metadata:
+            raise OSError('fixture failure')
+        return rename(path, target)
+    monkeypatch.setattr(Path, 'rename', fail_metadata)
+    with pytest.raises(ValueError, match='Não foi possível apagar'):
+        LocalStudioQueries(tmp_path).delete_image(saved['id'], 'references')
+    assert image.read_bytes() == picture()
+    assert len(refs.catalog(tmp_path)) == 1
+
+
+def test_delete_refuses_trash_outside_store(tmp_path):
+    from realcenter_marketing.infrastructure.queries import LocalStudioQueries
+    root = tmp_path / 'store'
+    saved = refs.save_reference(root, refs.ReferenceRequest(upload=base64.b64encode(picture()).decode()))
+    outside = tmp_path / 'other-store'
+    outside.mkdir()
+    try:
+        (root / '.trash').symlink_to(outside, target_is_directory=True)
+    except OSError:
+        pytest.skip('Symlink privilege unavailable')
+    with pytest.raises(ValueError):
+        LocalStudioQueries(root).delete_image(saved['id'], 'references')
+    assert refs.reference_file(root, saved['id']).is_file()
+    assert list(outside.iterdir()) == []
+
+
+def test_delete_image_http_refuses_busy_store_and_recovers(tmp_path):
+    server = make_server(tmp_path, 0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    saved = refs.save_reference(tmp_path, refs.ReferenceRequest(upload=base64.b64encode(picture()).decode()))
+    base = f'http://127.0.0.1:{server.server_port}'
+    try:
+        token = json.load(urlopen(base + '/api/config'))['token']
+        headers = {'Content-Type': 'application/json', 'X-App-Token': token}
+        request = Request(base + f'/api/references/{saved["id"]}/delete', data=b'{}', headers=headers)
+        scheduler = server.container.service.scheduler
+        assert scheduler.acquire()
+        try:
+            with pytest.raises(HTTPError) as error:
+                urlopen(request)
+            assert error.value.code == 409
+            assert refs.reference_file(tmp_path, saved['id']).is_file()
+        finally:
+            scheduler.release()
+        assert json.load(urlopen(request))['deleted'] == saved['id']
+        assert refs.catalog(tmp_path) == []
     finally:
         server.shutdown()
         server.server_close()

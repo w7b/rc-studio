@@ -2,11 +2,13 @@
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 from typing import Literal
 
 from pydantic import Field
 from realcenter_marketing.domain.campaigns import StructuredModel, Text
+from realcenter_marketing.domain.tenant import TenantProfile
 
 ROLE_FOLDERS = {'creative': 'creative_producer', 'performance': 'performance_marketing'}
 
@@ -30,11 +32,21 @@ def resources_root():
     return workspace / 'resources'
 
 
+def root_overrides_allowed():
+    """A data root may replace agent instructions and the policy only when explicitly
+    allowed. The default is off: in a shared deployment the data root belongs to the
+    tenant, and an override there would silence agent-policy.md — the file that forbids
+    inventing prices, expiry dates and addresses."""
+    return os.environ.get('REALCENTER_ALLOW_ROOT_OVERRIDES', '') == '1'
+
+
 def agent_directory(root, role):
     if role not in {'marketing_director', 'social_media', 'copywriter', 'creative', 'performance', 'marketing_analyst'}:
         raise ValueError('Agente desconhecido')
     legacy = root / 'agents' / role
-    return legacy if legacy.is_dir() else resources_root() / 'agents' / ROLE_FOLDERS.get(role, role)
+    if root_overrides_allowed() and legacy.is_dir():
+        return legacy
+    return resources_root() / 'agents' / ROLE_FOLDERS.get(role, role)
 
 
 def load_manifest(root, role):
@@ -42,20 +54,72 @@ def load_manifest(root, role):
 
 
 def load_instructions(root, role):
-    return (agent_directory(root, role) / 'instructions.md').read_text(encoding='utf-8')
+    text = (agent_directory(root, role) / 'instructions.md').read_text(encoding='utf-8')
+    return render(text, load_profile(root))
+
+
+PLACEHOLDER = re.compile(r'\{\{\s*([a-z_]+)\s*\}\}')
+
+
+def load_profile(root):
+    """The store's own identity. A missing file yields an empty profile, never a fallback
+    to whichever store happened to be first."""
+    path = root / 'tenant.json'
+    if not path.is_file():
+        return TenantProfile()
+    try:
+        return TenantProfile.model_validate_json(path.read_text(encoding='utf-8'))
+    except (ValueError, OSError):
+        return TenantProfile()
+
+
+def render(text, profile):
+    """Substitute {{field}} placeholders, dropping any line whose value is empty.
+
+    Dropping the whole line matters: leaving "Inclua o endereço:" with nothing after it
+    is an invitation for the model to invent one, which agent-policy.md forbids. The
+    substitution is a regex rather than str.format_map because Brand Kit markdown may
+    legitimately contain braces, and format_map would crash on them.
+    """
+    values = profile.placeholders()
+    kept = []
+    for line in text.splitlines():
+        names = PLACEHOLDER.findall(line)
+        if names and any(not values.get(name, '') for name in names):
+            continue
+        kept.append(PLACEHOLDER.sub(lambda match: values.get(match.group(1), ''), line))
+    return chr(10).join(kept)
+
+
+def load_claims(pack):
+    path = resources_root() / 'claims' / f'{pack}.md'
+    return path.read_text(encoding='utf-8') if path.is_file() else ''
+
+
+def category_catalog():
+    return json.loads((resources_root() / 'catalog/store-categories.json').read_text(encoding='utf-8'))
 
 
 def load_policy(root):
     path = root / 'config/agent-policy.md'
-    if not path.is_file():
+    if not (root_overrides_allowed() and path.is_file()):
         path = resources_root() / 'policies/agent-policy.md'
-    return path.read_text(encoding='utf-8')
+    profile = load_profile(root)
+    policy = render(path.read_text(encoding='utf-8'), profile)
+    catalog = {item['name']: item['claim_packs'] for item in category_catalog()}
+    packs = [profile.pack]
+    for category in profile.categories:
+        packs.extend(catalog.get(category, ['varejo_geral']))
+    claims = '\n\n'.join(load_claims(pack) for pack in dict.fromkeys(packs))
+    return policy + chr(10) + chr(10) + claims if claims else policy
 
 
 # Only the Creative directs the art, so only it is charged for the visual guides.
 # The others plan, write and validate: identity and voice are what they act on.
 # A role absent from this map receives the whole kit.
 BRAND_SCOPE = {
+    'performance': ('brand.md', 'tone-of-voice.md'),
+    'marketing_analyst': ('brand.md', 'tone-of-voice.md'),
     'marketing_director': ('brand.md', 'tone-of-voice.md'),
     'social_media': ('brand.md', 'tone-of-voice.md'),
     'copywriter': ('brand.md', 'tone-of-voice.md'),

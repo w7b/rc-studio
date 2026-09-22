@@ -9,11 +9,12 @@ from realcenter_marketing.domain.campaigns import Campaign, CampaignBrief, CopyP
 from realcenter_marketing.bootstrap.campaigns import create_campaign, save_campaign
 
 
-def test_director_calls_specialists_and_preserves_outputs(settings, demo, tmp_path):
+def test_director_plans_then_specialists_run_then_director_reviews(settings, demo, tmp_path):
     result = asyncio.run(create_campaign(CampaignBrief(request="Crie uma campanha para o final de semana da Real Center."), settings, model=demo))
+    # One plan, one call per specialist, one review. The Director no longer re-reads a
+    # growing conversation between every delegation.
     assert [call[0] for call in demo.calls] == [
-        "DirectorReview", "SocialPlan", "DirectorReview", "CopyPack",
-        "DirectorReview", "CreativeBrief", "DirectorReview",
+        "CampaignPlan", "SocialPlan", "CopyPack", "CreativeBrief", "DirectorReview",
     ]
     assert result.delegation_log == ["social_media", "copywriter", "creative"]
     assert result.social.model_dump() == demo.responses["SocialPlan"]
@@ -33,57 +34,46 @@ def test_director_calls_specialists_and_preserves_outputs(settings, demo, tmp_pa
     assert save_campaign(result, tmp_path) != path
 
 
-def test_out_of_order_specialist_is_refused_without_hiding_the_tool(settings, demo):
-    """The tool list must not change between turns, or the cached prefix is lost.
+def test_no_agent_is_given_a_tool(settings, demo):
+    """This is what lets a model outside OpenAI direct a campaign.
 
-    A whole campaign was measured at 0 cached input tokens because every Director turn
-    sent a different set of tools. Order is enforced when the tool runs instead.
+    Several providers disable tool calling as soon as the answer is constrained to a
+    schema. The old Director needed both at once, which disqualified every model that
+    made that trade. Nothing in the team holds a tool now, so the trade never comes up.
     """
     team = build_team(settings, model=demo)
-    names = [tool.name for tool in team.director.tools]
-    assert names == ['consult_social_media', 'consult_copywriter', 'consult_creative']
-
-    async def call(tool):
-        return await tool.on_invoke_tool(None, '{"input": "x"}')
-
-    copywriter = team.director.tools[1]
-    refused = asyncio.run(call(copywriter))
-    assert 'fora de ordem' in refused.lower() and 'consult_social_media' in refused
-
-    team.delegation_log.append('social_media')
-    # The same tool is now the pending step, and the list never changed.
-    assert [tool.name for tool in team.director.tools] == names
-    assert 'fora de ordem' not in asyncio.run(call(copywriter)).lower()
-
-
-def test_tools_match_manifests_and_future_agents_are_disabled(settings, demo):
-    team = build_team(settings, model=demo)
-    assert not team.director.handoffs
-    for role, agent in {"marketing_director": team.director, **team.specialists}.items():
-        assert {t.name for t in agent.tools} == set(load_manifest(settings.project_root, role).allowed_tools)
+    agents = {"planner": team.planner, "reviewer": team.reviewer, **team.specialists}
+    for name, agent in agents.items():
+        assert not agent.tools, f'{name} recebeu tools'
+        assert not agent.handoffs, f'{name} recebeu handoffs'
         AgentOutputSchema(agent.output_type)
-    assert all(not agent.tools for agent in team.specialists.values())
+    # The manifest is the source of that claim, not just the construction above.
+    assert not load_manifest(settings.project_root, "marketing_director").allowed_tools
     for role in ["performance", "marketing_analyst"]:
-        assert load_manifest(settings.project_root, role).status == "planned"
+        assert load_manifest(settings.project_root, role).status == "active"
         assert role not in team.specialists
 
 
-def test_early_director_completion_is_rejected(settings, demo):
-    original = demo.get_response
-
-    async def no_tools(*args, **kwargs):
-        kwargs["tools"] = []
-        return await original(*args, **kwargs)
-
-    demo.get_response = no_tools
-    with pytest.raises(ValueError, match="sem concluir"):
-        asyncio.run(create_campaign(CampaignBrief(request="Campanha"), settings, model=demo))
-
-
-def test_mismatched_stories_are_rejected(settings, demo):
+def test_specialists_run_in_order_and_a_failure_stops_the_pipeline(settings, demo):
+    """Order used to be enforced by refusing out-of-turn tool calls. It is the loop now,
+    and a specialist never starts before the previous delivery has validated."""
     demo.responses["CopyPack"]["stories"][0]["number"] = 99
     with pytest.raises(ValueError, match="corresponder"):
         asyncio.run(create_campaign(CampaignBrief(request="Campanha"), settings, model=demo))
+    names = [call[0] for call in demo.calls]
+    assert names.index("SocialPlan") < names.index("CopyPack") < names.index("CreativeBrief")
+
+
+def test_an_incomplete_run_is_never_saved(settings, demo):
+    """A runtime that returns fewer deliveries than the pipeline promises is refused."""
+    from realcenter_marketing.application.campaigns.create_campaign import create_campaign as compose
+    from realcenter_marketing.application.orchestration import AgentResult
+
+    async def truncated(_brief):
+        return AgentResult(demo.responses["DirectorReview"], {"social_media": object()}, ["social_media"])
+
+    with pytest.raises(ValueError, match="sem concluir"):
+        asyncio.run(compose(CampaignBrief(request="Campanha"), truncated, demo=True))
 
 
 def test_invalid_specialist_output_fails(settings, demo):

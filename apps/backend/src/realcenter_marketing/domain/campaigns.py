@@ -1,5 +1,7 @@
 from typing import Annotated, Literal
 
+from .tenant import DEFAULT_DELIVERABLES
+
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 from realcenter_marketing.domain.publications import Publication
 
@@ -67,7 +69,7 @@ class CopyPack(StructuredModel):
     cta: Text
     stories: list[StoryCopy] = Field(min_length=3, max_length=7)
     feed_caption: Text
-    leaflet_copy: Text
+    leaflet_copy: Text | None = None
     whatsapp_draft: Text
     carousel_cards: list[CarouselCard] = Field(default_factory=list, max_length=10)
 
@@ -81,15 +83,71 @@ class AssetBrief(StructuredModel):
 
 class CreativeBrief(StructuredModel):
     visual_direction: Text
-    leaflet_brief: Text
-    assets: list[AssetBrief] = Field(min_length=3)
+    leaflet_brief: Text | None = None
+    # The floor is one asset; which formats are actually required comes from the
+    # store's declared deliverables, checked below.
+    assets: list[AssetBrief] = Field(min_length=1)
     brand_pending: list[Text]
 
     @model_validator(mode="after")
-    def required_formats(self):
-        if not {"stories", "feed", "leaflet"} <= {a.format for a in self.assets}:
-            raise ValueError("Briefing precisa de Stories, Feed e encarte")
+    def required_formats(self, info):
+        """The required set comes from the store, not from the product.
+
+        A leaflet is a supermarket artefact. A pet shop, a barber or a clothing store has
+        none, and demanding one produced a deliverable nobody asked for. The validation
+        context carries the store's declared deliverables; with no context the floor is
+        Stories and Feed, which every store publishes."""
+        expected = (info.context or {}).get('deliverables')
+        required = set(expected or DEFAULT_DELIVERABLES)
+        produced = {a.format for a in self.assets}
+        if not required <= produced:
+            missing = ', '.join(sorted(required - produced))
+            raise ValueError(
+                f"Briefing precisa dos formatos declarados pela loja: {missing}. "
+                "Formatos fora desta campanha entram como briefing condicional, dizendo que "
+                "não são produzidos agora — não podem simplesmente sair da lista.")
         return self
+
+
+class SpecialistBrief(StructuredModel):
+    """What the Director hands one specialist before it works.
+
+    This is the same information the delegation tool used to ask for in prose —
+    objective, concept and specific guidance — now a validated field instead of a
+    free-form argument the model had to remember to fill.
+    """
+    role: Literal["social_media", "copywriter", "creative"]
+    objective: Text
+    concept: Text
+    guidance: Text
+
+
+class CampaignPlan(StructuredModel):
+    concept: Text
+    # The bounds are on the schema, not only in the prompt: a provider that honours
+    # strict json_schema then refuses a short plan before it costs a round trip.
+    briefs: list[SpecialistBrief] = Field(min_length=len(SPECIALIST_ROLES),
+                                          max_length=len(SPECIALIST_ROLES))
+
+    @model_validator(mode="after")
+    def validate_coverage(self):
+        """One brief per specialist. Order in this list is deliberately not required.
+
+        The pipeline walks SPECIALIST_STEPS and looks each brief up by role, so the order
+        the Director happens to write them in is never read. Demanding it anyway failed
+        otherwise-valid plans for a property nothing depends on.
+        """
+        papeis = [brief.role for brief in self.briefs]
+        if sorted(papeis) != sorted(SPECIALIST_ROLES):
+            faltando = sorted(set(SPECIALIST_ROLES) - set(papeis))
+            repetidos = sorted({papel for papel in papeis if papeis.count(papel) > 1})
+            detalhe = (f'faltam: {", ".join(faltando)}' if faltando
+                       else f'repetidos: {", ".join(repetidos)}')
+            raise ValueError(f'Plano precisa de exatamente um briefing por especialista ({detalhe})')
+        return self
+
+    def for_role(self, role):
+        return next(brief for brief in self.briefs if brief.role == role)
 
 
 class DirectorReview(StructuredModel):

@@ -16,11 +16,14 @@ def test_each_agent_is_visible_and_caption_is_exported(settings, demo, tmp_path)
     journal = RunJournal(tmp_path / "run", events.append)
     brief = CampaignBrief(request="Campanha", confirmed_facts=["Produto confirmado exclusivo"])
     campaign = asyncio.run(create_campaign(brief, settings, model=demo, journal=journal))
+    # The Director appears twice: once planning, once reviewing.
     assert [e["agent"] for e in events if e["event"] == "started"] == [
-        "Marketing Director", "Social Media Senior", "Copywriter Senior", "Creative Producer"]
-    assert len([e for e in events if e["event"] == "completed"]) == 4
+        "Marketing Director", "Social Media Senior", "Copywriter Senior",
+        "Creative Producer", "Marketing Director"]
+    assert len([e for e in events if e["event"] == "completed"]) == 5
     assert (journal.directory / "legenda-feed.txt").read_text(encoding="utf-8").strip() == campaign.copywriting.feed_caption
-    for role in ("social_media", "copywriter", "creative", "marketing_director"):
+    for role in ("social_media", "copywriter", "creative", "marketing_director",
+                 "marketing_director_plan"):
         assert json.loads((journal.directory / f"{role}.json").read_text(encoding="utf-8"))
     assert all("Produto confirmado exclusivo" in call[1] for call in demo.calls)
 

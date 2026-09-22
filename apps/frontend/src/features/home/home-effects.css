@@ -1,0 +1,495 @@
+/* --- Home motion ---
+   Everything here is opt-out: the reduced-motion block further down disables animation
+   globally, and the hooks that drive the counters and the typewriter check the same
+   preference before they start. */
+.home-hero {
+  position: relative;
+  padding: 84px 0 0;
+  isolation: isolate;
+}
+.particle-field {
+  position: absolute;
+  inset: -40px -50vw 20%;
+  width: 100vw;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: -1;
+  opacity: 0.85;
+  pointer-events: none;
+  /* Fades out before the content, so the field never competes with the text. */
+  mask-image: radial-gradient(70% 60% at 50% 35%, var(--mask-ink) 40%, transparent 100%);
+}
+.home-hero-text {
+  position: relative;
+}
+.home-fade {
+  animation: rise 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+.home-trade {
+  color: var(--brand);
+  white-space: nowrap;
+}
+.home-trade i {
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  margin-left: 3px;
+  vertical-align: -0.08em;
+  background: var(--brand);
+  animation: caret 1s steps(1) infinite;
+}
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+.home-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+}
+.home-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-dim);
+  font-size: 0.86rem;
+}
+
+/* Marquee of real campaign art. */
+.home-strip {
+  margin-top: 56px;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    var(--mask-ink) 8%,
+    var(--mask-ink) 92%,
+    transparent
+  );
+}
+.home-strip-track {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  animation: marquee 46s linear infinite;
+}
+.home-strip:hover .home-strip-track {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  to {
+    /* Half, because the list is duplicated once. */
+    transform: translateX(-50%);
+  }
+}
+.home-art {
+  position: relative;
+  margin: 0;
+  width: 172px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.home-art:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+.home-art img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.home-art figcaption {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-overlay);
+  backdrop-filter: blur(4px);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.home-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-top: 56px;
+}
+.home-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 20px 14px;
+  border-radius: 13px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-1);
+  opacity: 0;
+  transform: translateY(16px);
+  transition:
+    opacity 0.5s ease var(--delay, 0ms),
+    transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1) var(--delay, 0ms),
+    border-color 0.2s ease;
+}
+.home-stat.is-shown {
+  opacity: 1;
+  transform: none;
+}
+.home-stat:hover {
+  border-color: var(--brand-muted);
+}
+.home-stat svg {
+  color: var(--brand);
+}
+.home-stat strong {
+  font-size: 1.7rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+.home-stat span {
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.reveal.is-shown {
+  opacity: 1;
+  transform: none;
+}
+.reveal.is-shown .home-card,
+.reveal.is-shown .home-tags li {
+  animation: rise 0.55s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* The icon lands a beat after the card that carries it, so it reads as arriving rather
+   than as part of the block sliding up. The extra 160ms is what separates the two. */
+.reveal.is-shown .home-card svg,
+.reveal.is-shown .home-stat svg,
+.reveal.is-shown .title-with-icon svg {
+  animation: icon-pop 0.5s cubic-bezier(0.2, 1.1, 0.35, 1) both;
+  animation-delay: calc(var(--delay, 0ms) + 160ms);
+}
+@keyframes icon-pop {
+  from {
+    opacity: 0;
+    /* Scaled about its own centre: from the corner it would slide in from outside. */
+    transform: scale(0.55) translateY(6px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08) translateY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.home-card {
+  position: relative;
+  transition:
+    transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1),
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+.home-card:not(.spotlight-card):hover {
+  transform: translateY(-4px);
+  border-color: var(--brand-muted);
+  background: var(--control-hover);
+}
+.home-card svg {
+  color: var(--brand);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.home-card:hover svg {
+  transform: scale(1.12) rotate(-4deg);
+}
+.home-step-number {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--line-soft);
+}
+.home-tags li {
+  transition:
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+.home-tags li:hover {
+  border-color: var(--brand-muted);
+  color: var(--text);
+  transform: translateY(-2px);
+}
+
+.home-closing {
+  text-align: center;
+  padding: 44px 24px;
+  border-radius: 16px;
+  border: 1px solid var(--line-soft);
+  background:
+    radial-gradient(
+      120% 140% at 50% 0%,
+      color-mix(in srgb, var(--brand) 10%, transparent),
+      transparent 62%
+    ),
+    var(--surface-1);
+}
+.home-closing svg {
+  color: var(--brand);
+}
+.home-closing h2 {
+  margin-top: 12px;
+}
+
+@media (max-width: 640px) {
+  .home-hero {
+    padding-top: 52px;
+  }
+  .home-art {
+    width: 136px;
+  }
+  .home-strip-track {
+    animation-duration: 32s;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-fade,
+  .reveal,
+  .reveal.is-shown .home-card,
+  .reveal.is-shown .home-tags li,
+  .reveal.is-shown .home-card svg,
+  .reveal.is-shown .home-stat svg,
+  .reveal.is-shown .title-with-icon svg,
+  .home-stat {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .home-strip-track {
+    animation: none;
+  }
+  .home-trade i {
+    animation: none;
+  }
+}
+
+/* Corrections after looking at the rendered page. */
+
+/* 100vw counts the scrollbar, so the field pushed the page sideways. Anchoring to the
+   hero and letting it bleed with a fixed inset avoids the viewport unit entirely. */
+.particle-field {
+  position: absolute;
+  inset: -40px -120px 18%;
+  width: auto;
+  left: -120px;
+  transform: none;
+}
+body,
+.home {
+  overflow-x: clip;
+}
+
+/* The heading was capped at 17ch, which left "cara" stranded on its own line. */
+.home-hero h1 {
+  max-width: 22ch;
+}
+
+/* Four guarantees read as 2x2; auto-fit was giving 3 + 1 orphan. */
+.home-guarantees {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 720px) {
+  .home-guarantees {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Stretching via inset alone left the canvas at its intrinsic 300x150. Explicit size,
+   with the bleed done by negative margins instead. */
+.particle-field {
+  inset: auto;
+  top: -40px;
+  left: -120px;
+  width: calc(100% + 240px);
+  height: 78%;
+}
+
+/* --- Clientes atendidos --- */
+.home-clients .eyebrow {
+  margin-bottom: 6px;
+}
+.client-card {
+  margin-top: 28px;
+  padding: 26px;
+  border-radius: 16px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-1);
+  text-align: left;
+  transition: border-color 0.2s ease;
+}
+.client-card > header {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+.client-logo {
+  flex: 0 0 auto;
+  width: 104px;
+  height: 104px;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+}
+.client-logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.client-id {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+.client-id h3 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+.client-segment {
+  margin: 4px 0 0;
+  color: var(--brand);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+.client-note {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  max-width: 56ch;
+}
+.client-since {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--text-dim);
+  font-size: 0.76rem;
+}
+.client-work {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.client-work figure {
+  aspect-ratio: 4 / 5;
+  position: relative;
+  margin: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.client-work figure:hover {
+  transform: translateY(-5px);
+}
+.client-work img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.client-work figcaption {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--surface-overlay);
+  backdrop-filter: blur(4px);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.client-invite {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 26px;
+  color: var(--text-muted);
+}
+
+/* The CTA is a link now, so it needs the button's own layout rules. */
+a.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-decoration: none;
+}
+.home-cta {
+  min-height: 48px;
+  padding: 0 24px;
+}
+
+/* Guarantee cards carry the icon inline with the heading. */
+.home-guarantees h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+}
+.home-guarantees h3 svg {
+  flex: 0 0 auto;
+}
+
+.home-closing h2 {
+  margin-top: 0;
+}
+
+@media (max-width: 560px) {
+  .client-card > header {
+    gap: 16px;
+  }
+  .client-logo {
+    width: 76px;
+    height: 76px;
+  }
+}

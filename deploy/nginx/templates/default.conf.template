@@ -1,0 +1,19 @@
+# Only NGINX_UPSTREAM is interpolated by the official image entrypoint.
+# Query parameters (OAuth codes, for example) do not belong in access logs.
+log_format studio '$remote_addr [$time_local] "$request_method $uri $server_protocol" '
+                  '$status $body_bytes_sent $request_time';
+
+server {
+    listen 8080 default_server;
+    listen [::]:8080 default_server;
+    server_name _;
+    server_tokens off;
+    access_log /dev/stdout studio;
+    error_log /dev/stderr warn;
+
+    # Docker DNS is re-resolved so replacing the backend container needs no reload.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $studio_backend http://${NGINX_UPSTREAM};
+
+    include /etc/nginx/snippets/studio.conf;
+}

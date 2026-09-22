@@ -3,7 +3,34 @@ import { Copy, Download, ImagePlus, Image, CheckCircle, LoaderCircle } from 'luc
 import ImageRevision from '../image_revision/ImageRevision.jsx';
 import AgentTeam from '../agent_team/AgentTeam.jsx';
 import Diagnostics from './Diagnostics.jsx';
+import FieldHelp from '../../shared/components/FieldHelp.jsx';
 import CostSummary from './CostSummary.jsx';
+// Short, concrete explanations. A hint that restates the label teaches nothing, so each
+// one says what the field is for or what makes it right.
+const hints = {
+  strategy: 'O raciocínio por trás da campanha: a quem ela fala e o que quer que aconteça.',
+  concept: 'A ideia central que amarra texto e arte. Uma frase, não um slogan pronto.',
+  headline: 'A chamada principal da arte. Curta, lida de relance, sem depender da legenda.',
+  cta: 'A ação que você quer do cliente: visitar a loja, chamar no WhatsApp, aproveitar a oferta.',
+  feed_caption: 'A legenda publicada junto da imagem no Feed, com gancho, informação e CTA.',
+  leaflet_copy: 'O texto do encarte impresso ou digital, quando a loja usa esse formato.',
+  whatsapp_draft: 'Mensagem pronta para enviar em lista ou status do WhatsApp.',
+  stories: 'A sequência de quadros do Stories, na ordem em que serão publicados.',
+  audience_hypothesis:
+    'Para quem a campanha foi pensada. É hipótese a validar, não dado confirmado.',
+  visual_direction: 'Como a arte deve parecer: clima, cores, enquadramento e referências.',
+  leaflet_brief: 'Instruções de produção do encarte, separadas do texto que ele carrega.',
+  assets: 'Cada peça que a campanha prevê, com formato e dimensões.',
+  layout: 'Onde cada elemento fica na arte e quanto espaço ocupa.',
+  hierarchy: 'A ordem de leitura: o que o olho encontra primeiro, depois e por último.',
+  brand_pending: 'O que falta no Brand Kit para a arte ficar fiel à identidade da loja.',
+  assumptions: 'O que foi suposto por falta de informação confirmada. Revise antes de publicar.',
+  pending_information: 'Dados que ninguém confirmou e que a IA não inventou de propósito.',
+  review_notes: 'Contradições e ressalvas que o Director encontrou ao revisar as entregas.',
+  carousel_cards: 'Os cards do carrossel, numerados na ordem de publicação.',
+  calendar: 'Quando publicar cada peça.',
+};
+
 const titles = {
   strategy: 'Estratégia',
   concept: 'Conceito',
@@ -50,20 +77,29 @@ function Fields({ value }) {
             </div>
           ))
         ) : (
-          <p className="muted text-sm">Nenhuma pendência.</p>
+          <p className="muted text-sm">Sem itens.</p>
         )}
       </div>
     );
   return (
     <div className="space-y-5">
-      {Object.entries(value).map(([k, v]) => (
-        <div key={k}>
-          <h3 className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">
-            {titles[k] || k}
-          </h3>
-          <Fields value={v} />
-        </div>
-      ))}
+      {Object.entries(value)
+        .filter(
+          ([, item]) =>
+            item !== null &&
+            item !== undefined &&
+            item !== '' &&
+            (!Array.isArray(item) || item.length > 0)
+        )
+        .map(([k, v]) => (
+          <div key={k}>
+            <h3 className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2 field-title">
+              {titles[k] || k}
+              <FieldHelp text={hints[k]} />
+            </h3>
+            <Fields value={v} />
+          </div>
+        ))}
     </div>
   );
 }
@@ -83,6 +119,13 @@ const labels = {
   image_started: 'Gerando arte',
   image_completed: 'Arte pronta',
   image_failed: 'Falha na geração de imagem',
+};
+const deliveryHelp = {
+  copywriter: 'Textos preparados para legenda, chamada e outros canais da campanha.',
+  social_media: 'Planejamento de público, formatos e calendário que orienta os textos.',
+  creative: 'Orientações de composição, hierarquia e identidade usadas para produzir a arte.',
+  marketing_director:
+    'Revisão da estratégia, suposições e informações que ainda precisam ser confirmadas.',
 };
 export default function CampaignResults({ run, busy, onImage, connected }) {
   const [tab, setTab] = useState('copywriter'),
@@ -135,7 +178,7 @@ export default function CampaignResults({ run, busy, onImage, connected }) {
           <h2 className="mt-1">
             {outputs.campaign?.director?.concept?.slice(0, 120) ||
               outputs.brief?.request?.slice(0, 100) ||
-              'Campanha Real Center'}
+              'Campanha'}
           </h2>
         </div>
         {outputs.campaign && (
@@ -238,19 +281,29 @@ export default function CampaignResults({ run, busy, onImage, connected }) {
           <p className="muted text-sm mt-3">{outputs.copywriter?.cta}</p>
         </section>
       </div>
-      <section className="panel p-6">
-        <div className="tabs">
+      <details className="panel p-6 campaign-deliveries">
+        <summary>Detalhes da campanha</summary>
+        <p className="muted mt-4 mb-5">
+          Consulte os textos completos, o planejamento e as orientações usadas pelos agentes.
+        </p>
+        <div className="tabs" role="group" aria-label="Entregas da campanha">
           {[
-            ['copywriter', 'Copies'],
-            ['social_media', 'Social Media'],
-            ['creative', 'Briefing visual'],
-            ['marketing_director', 'Director'],
+            ['copywriter', 'Textos'],
+            ['social_media', 'Planejamento'],
+            ['creative', 'Direção da arte'],
+            ['marketing_director', 'Revisão'],
           ].map(([id, label]) => (
-            <button key={id} className={tab === id ? 'selected' : ''} onClick={() => setTab(id)}>
+            <button
+              key={id}
+              aria-pressed={tab === id}
+              className={tab === id ? 'selected' : ''}
+              onClick={() => setTab(id)}
+            >
               {label}
             </button>
           ))}
         </div>
+        <p className="muted mb-5">{deliveryHelp[tab]}</p>
         {outputs[tab] ? (
           <>
             <Fields value={outputs[tab]} />
@@ -261,7 +314,7 @@ export default function CampaignResults({ run, busy, onImage, connected }) {
         ) : (
           <p className="muted py-6">Essa entrega ainda não foi concluída.</p>
         )}
-      </section>
+      </details>
       {!!run.inputs?.length && (
         <section className="panel p-6">
           <h2 className="mb-4">Referências utilizadas</h2>

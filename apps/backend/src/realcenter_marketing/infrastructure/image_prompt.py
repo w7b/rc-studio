@@ -80,15 +80,16 @@ def brand_essence(brand_documents, budget):
     return ' '.join(selected)
 
 
-def compact_image_prompt(headline, cta, visual_direction, publication, brand_documents, limit):
+def compact_image_prompt(headline, cta, visual_direction, publication, brand_documents, limit,
+                         described='a marca do Brand Kit'):
     """Self-contained prompt for a text-to-image renderer working under a small budget.
 
     No product photo, logo or style reference reaches such a model, so the piece is
     described in words only and nothing in the text claims an attachment.
     """
     width, height = publication.dimensions
-    head = (f'Arte publicitária de {publication.kind} {width}x{height} px para o supermercado '
-            f'Real Center, com texto em português. Headline: "{headline}". CTA: "{cta}". ')
+    head = (f'Arte publicitária de {publication.kind} {width}x{height} px para {described}, '
+            f'com texto em português. Headline: "{headline}". CTA: "{cta}". ')
     tail = ' Não invente preço, desconto, validade, endereço nem produto ausente.'
     room = limit - len(head) - len(tail)
     if room <= 0:

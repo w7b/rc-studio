@@ -1,0 +1,12 @@
+# NGINX for the existing Python server on the host; no second app or database.
+# Docker Compose 2.24.4+ supports !reset.
+name: studio-ai
+
+services:
+  nginx:
+    extends:
+      file: compose.yaml
+      service: nginx
+    environment:
+      NGINX_UPSTREAM: host.docker.internal:${STUDIO_BACKEND_PORT:-8766}
+    depends_on: !reset {}

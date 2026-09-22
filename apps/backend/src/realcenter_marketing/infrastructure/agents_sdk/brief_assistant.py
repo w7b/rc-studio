@@ -11,11 +11,15 @@ from pydantic import Field, StringConstraints
 from realcenter_marketing.infrastructure.agents_sdk.team_factory import build_team
 from realcenter_marketing.domain.campaigns import CampaignBrief, StructuredModel
 
-async def improve_brief(request, settings, journal, *, model=None):
+async def improve_brief(request, settings, journal, *, model=None, option=None):
     if model is None:
-        settings.validate_live()
+        if option and option.provider != 'openai':
+            settings.validate_provider(option)
+        else:
+            settings.validate_live()
     brief = CampaignBrief(request=request.request, confirmed_facts=request.confirmed_facts)
-    creative = build_team(settings, model=model, journal=journal, brief=brief).specialists['creative']
+    creative = build_team(settings, model=model, model_name=option.model if option else None,
+                          journal=journal, brief=brief).specialists['creative']
     original_instructions = creative.instructions
 
     def instructions(context, agent):
@@ -37,7 +41,7 @@ async def improve_brief(request, settings, journal, *, model=None):
     provider = None
     if model is None:
         # Its own client too: otherwise this consultation poisons the next campaign's pool.
-        provider = build_provider(settings)
+        provider = build_provider(settings, option)
         config.model_provider = provider
     try:
         async with asyncio.timeout(min(settings.timeout_seconds, 90)):

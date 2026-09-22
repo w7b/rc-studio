@@ -16,8 +16,8 @@ from realcenter_marketing.infrastructure.observability.journal import RunJournal
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Cria rascunhos de campanhas Real Center")
-    parser.add_argument("request", nargs="?", default="Crie uma campanha para o final de semana da Real Center.")
+    parser = argparse.ArgumentParser(description="Cria rascunhos de campanhas da loja configurada")
+    parser.add_argument("request", nargs="?", default="Crie uma campanha para o final de semana da loja.")
     parser.add_argument("--project-root", type=Path, default=None)
     parser.add_argument("--brief", type=Path, help="Briefing JSON com request e confirmed_facts")
     parser.add_argument("--demo", action="store_true", help="Executa roteiro fixo offline, sem geração por IA")

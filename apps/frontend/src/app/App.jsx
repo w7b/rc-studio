@@ -1,47 +1,114 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Sparkles,
-  LayoutDashboard,
-  FolderOpen,
-  Images,
-  ArrowUpRight,
-  Plus,
-  ChevronRight,
-  Wifi,
-  PanelLeft,
-  LoaderCircle,
-  Network,
-  Database,
-  Megaphone,
-  Gauge,
-} from 'lucide-react';
+import { FolderOpen, ArrowUpRight, Plus, ChevronRight, Menu, X } from 'lucide-react';
 import { api, post } from '../shared/api/client.js';
+import { modelLabel } from '../shared/catalog/models.js';
 import References from '../features/references/References.jsx';
+import Library from '../features/library/Library.jsx';
 import CampaignActions from '../features/campaigns/CampaignActions.jsx';
+import Feedback from '../shared/components/Feedback.jsx';
+import { followSpotlight } from '../shared/components/SpotlightCard.jsx';
 import CampaignForm from '../features/campaigns/CampaignForm.jsx';
 import CampaignResults from '../features/campaigns/CampaignResults.jsx';
 import IntegrationModules from '../features/integrations/IntegrationModules.jsx';
-import SystemCatalog from '../features/system/SystemCatalog.jsx';
+import Consultations from '../features/consultations/Consultations.jsx';
+import AgentUsage from '../features/system/AgentUsage.jsx';
+import Logs from '../features/logs/Logs.jsx';
+import Settings from '../features/config/Settings.jsx';
+import StudioSidebar from './StudioSidebar.jsx';
+import StudioBreadcrumbs from './StudioBreadcrumbs.jsx';
+import Tooltip from '../shared/components/Tooltip.jsx';
+import AdminPanel from '../features/admin/AdminPanel.jsx';
+import { campaignUrl, pageFor, PAGE_MODULE, STUDIO_ROUTES } from '../shared/navigation/routes.js';
 
-export default function App() {
+export default function App({
+  session = null,
+  onSignedOut = null,
+  onAccountUpdated = null,
+  route = '/studio',
+  navigate,
+}) {
+  const page = pageFor(route);
+  const selected = new URLSearchParams(route.split('?')[1] || '').get('run');
+  const setPage = (next) => navigate(STUDIO_ROUTES[next] || STUDIO_ROUTES.history);
+  const enabled = (module) => session?.modules?.[module] !== false;
+  const brandName = session?.tenant?.name || 'Studio';
+  const initials = brandName
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((word) => word[0] || '')
+    .join('')
+    .toUpperCase();
   const [sort, setSort] = useState('newest'),
     [search, setSearch] = useState('');
-  const [page, setPage] = useState('create'),
-    [config, setConfig] = useState(null),
+  // The sidebar collapses behind a hamburger; a parent with children opens on demand.
+  const [desktopMenu, setDesktopMenu] = useState(() => matchMedia('(min-width: 1101px)').matches);
+  const [menuOpen, setMenuOpen] = useState(() => desktopMenu);
+  const [retryNotice, setRetryNotice] = useState(null);
+  const [openGroups, setOpenGroups] = useState([]);
+  const menuToggle = React.useRef(null);
+  const pageContent = React.useRef(null);
+  const pinnedOpen = desktopMenu && menuOpen;
+  useEffect(() => {
+    const query = matchMedia('(min-width: 1101px)');
+    const resize = () => {
+      setDesktopMenu(query.matches);
+      setMenuOpen(query.matches);
+    };
+    query.addEventListener('change', resize);
+    return () => query.removeEventListener('change', resize);
+  }, []);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const escape = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        menuToggle.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', escape);
+    return () => window.removeEventListener('keydown', escape);
+  }, [menuOpen]);
+  React.useLayoutEffect(() => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const animation = pageContent.current?.animate(
+      [
+        { opacity: 0, transform: 'translateY(6px)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      { duration: 180, easing: 'ease-out' }
+    );
+    return () => animation?.cancel();
+  }, [route]);
+  const toggleGroup = (id) =>
+    setOpenGroups((current) =>
+      current.includes(id) ? current.filter((each) => each !== id) : [...current, id]
+    );
+  const [config, setConfig] = useState(null),
     [runs, setRuns] = useState([]),
     [media, setMedia] = useState([]),
     [active, setActive] = useState(null),
-    [selected, setSelected] = useState(null),
+    [serverBusy, setServerBusy] = useState(false),
+    [assisting, setAssisting] = useState(false),
     [connected, setConnected] = useState(false),
     [error, setError] = useState(''),
     [draft, setDraft] = useState(null);
+  const activeRef = React.useRef(null);
+  const busy = !!active || serverBusy || assisting;
+  activeRef.current = busy;
   async function refresh() {
     try {
-      const [state, assets] = await Promise.all([api('/api/runs'), api('/api/media')]);
+      const [state, assets] = await Promise.all([
+        enabled('campaigns') ? api('/api/runs') : Promise.resolve({ runs: [], active_id: null }),
+        ['campaigns', 'art_lib', 'references'].some(enabled)
+          ? api('/api/media')
+          : Promise.resolve([]),
+      ]);
       setRuns(state.runs);
       setActive(state.active_id);
+      setServerBusy(state.busy ?? !!state.active_id);
       setMedia(assets);
       setConnected(true);
+      return assets;
     } catch {
       setConnected(false);
     }
@@ -52,7 +119,10 @@ export default function App() {
     async function poll() {
       if (stopped) return;
       await refresh();
-      if (!stopped) timer = setTimeout(poll, 2000);
+      // Poll every 2s while busy, 6s while idle, and 15s while the tab is hidden.
+      // Hidden tabs keep polling so they can recover current state when revisited.
+      if (!stopped)
+        timer = setTimeout(poll, document.hidden ? 15000 : activeRef.current ? 2000 : 6000);
     }
     api('/api/config')
       .then(setConfig)
@@ -62,13 +132,30 @@ export default function App() {
       stopped = true;
       clearTimeout(timer);
     };
-  }, []);
+  }, [session?.modules]);
   async function create(payload) {
     const result = await post('/api/runs', payload, config.token);
     setActive(result.id);
-    setSelected(result.id);
-    setPage('result');
+    navigate(campaignUrl(result.id));
     await refresh();
+  }
+  async function assist(payload) {
+    setAssisting(true);
+    try {
+      return await post('/api/brief-assist', payload, config.token);
+    } finally {
+      await refresh();
+      setAssisting(false);
+    }
+  }
+  async function consult(payload) {
+    setAssisting(true);
+    try {
+      return await post('/api/consultations', payload, config.token);
+    } finally {
+      await refresh();
+      setAssisting(false);
+    }
   }
   async function image(id, payload = {}) {
     await post('/api/runs/' + id + '/image', payload, config.token);
@@ -77,15 +164,18 @@ export default function App() {
   }
   async function retry(id) {
     const result = await post('/api/runs/' + id + '/retry', {}, config.token);
+    setRetryNotice(result.id);
     setActive(result.id);
-    setSelected(result.id);
-    setPage('result');
+    navigate(campaignUrl(result.id));
+    await refresh();
+  }
+  async function rename(id, title) {
+    await post('/api/runs/' + id + '/rename', { title }, config.token);
     await refresh();
   }
   async function remove(id) {
     await post('/api/runs/' + id + '/delete', {}, config.token);
     if (selected === id) {
-      setSelected(null);
       setPage('history');
     }
     await refresh();
@@ -111,10 +201,11 @@ export default function App() {
   const actions = (run) => (
     <CampaignActions
       run={run}
-      busy={!!active || !connected || !config}
+      busy={busy || !connected || !config}
       onRetry={retry}
       onDelete={remove}
       onEdit={edit}
+      onRename={rename}
     />
   );
   async function useReference(item) {
@@ -123,104 +214,96 @@ export default function App() {
     const blob = await response.blob();
     setDraft({
       id: 'reference-' + item.id,
-      reference: new File([blob], item.title + '.' + item.extension, { type: blob.type }),
+      [item.kind === 'product' ? 'photo' : 'reference']: new File(
+        [blob],
+        item.title + '.' + item.extension,
+        { type: blob.type }
+      ),
     });
     setPage('create');
   }
   function open(id) {
-    setSelected(id);
-    setPage('result');
+    navigate(campaignUrl(id));
   }
   const historical = media.filter((m) => !m.product && m.run_id === 'assets');
   const selectedRun = runs.find((r) => r.id === selected);
   return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <a
-          className="wordmark"
-          href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            (setDraft(null), setPage('create'));
-          }}
+    <div
+      className={'app-shell' + (pinnedOpen ? ' menu-pinned' : '')}
+      onPointerMove={(event) => {
+        const button = event.target.closest(
+          '.button:not(.warning):not(.action-danger):not(.text-red-700)'
+        );
+        if (!button || button.disabled) return;
+        button.classList.add('spotlight-card', 'studio-spotlight');
+        followSpotlight(button, event);
+      }}
+      onPointerOut={(event) => {
+        const button = event.target.closest('.studio-spotlight');
+        if (button && !button.contains(event.relatedTarget)) delete button.dataset.spotlight;
+      }}
+      onPointerCancel={(event) => {
+        const button = event.target.closest('.studio-spotlight');
+        if (button) delete button.dataset.spotlight;
+      }}
+    >
+      <Tooltip text={menuOpen ? 'Fechar menu' : 'Abrir menu'}>
+        <button
+          ref={menuToggle}
+          type="button"
+          className={'menu-toggle' + (menuOpen ? ' is-open' : '')}
+          aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}
+          aria-expanded={menuOpen}
+          aria-controls="studio-navigation"
+          onClick={() => setMenuOpen((open) => !open)}
         >
-          <span className="brand-symbol">
-            rc<span>•</span>
-          </span>
-          <span>
-            Real Center<strong>STUDIO</strong>
-          </span>
-        </a>
-        <div className="workspace-label">WORKSPACE DE MARKETING</div>
-        <nav>
-          {[
-            ['create', 'Criar campanha', Plus],
-            ['history', 'Campanhas', FolderOpen],
-            ['gallery', 'Biblioteca de artes', Images],
-            ['references', 'Referências', Images],
-            ['erp', 'ERP e relatórios', Database],
-            ['ads', 'Meta Ads', Megaphone],
-            ['usage', 'Consumo dos agentes', Gauge],
-            ['system', 'Graphify e atividade', Network],
-          ].map(([id, label, Icon]) => (
-            <button
-              key={id}
-              onClick={() => {
-                if (id === 'create') setDraft(null);
-                setPage(id);
-              }}
-              className={page === id ? 'active' : ''}
-            >
-              <Icon size={18} />
-              {label}
-              {id === 'history' && <small>{runs.length}</small>}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-note">
-          <Sparkles size={20} />
-          <strong>
-            Sua equipe criativa,
-            <br />
-            no mesmo lugar.
-          </strong>
-          <p>
-            Do primeiro briefing
-            <br />à próxima campanha.
-          </p>
-        </div>
-        <div className="sidebar-bottom">
-          <span className={'connection-dot ' + (connected ? 'online' : '')} />
-          {connected ? 'Ambiente local conectado' : 'Conectando ao ambiente…'}
-        </div>
-      </aside>
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </Tooltip>
+      <button
+        type="button"
+        className={'menu-scrim' + (menuOpen && !pinnedOpen ? ' is-open' : '')}
+        aria-label="Fechar menu"
+        aria-hidden={!menuOpen || pinnedOpen}
+        tabIndex={-1}
+        onClick={() => setMenuOpen(false)}
+      />
+      <StudioSidebar
+        page={page}
+        session={session}
+        open={menuOpen}
+        groups={openGroups}
+        onToggleGroup={toggleGroup}
+        connected={connected}
+        count={runs.length}
+        onSignedOut={onSignedOut}
+        onNavigate={(id, parent = false) => {
+          if (id === 'create') setDraft(null);
+          setPage(id);
+          if (!pinnedOpen && !parent) setMenuOpen(false);
+        }}
+      />
       <div className="workspace">
         <header className="topbar">
-          <div className="text-sm text-slate-500">
-            Marketing <ChevronRight size={13} className="inline mx-2" />
-            <span className="text-slate-900">
-              {page === 'create'
-                ? 'Nova campanha'
-                : page === 'history'
-                  ? 'Campanhas'
-                  : page === 'gallery'
-                    ? 'Biblioteca'
-                    : page === 'references'
-                      ? 'Referências'
-                      : {
-                          erp: 'ERP e relatórios',
-                          ads: 'Meta Ads',
-                          usage: 'Consumo dos agentes',
-                          system: 'Graphify e atividade',
-                        }[page] || 'Resultados'}
-            </span>
-          </div>
+          <StudioBreadcrumbs page={page} onNavigate={setPage} />
           <div className="flex items-center gap-3">
-            <span className="badge">{active ? 'Equipe trabalhando' : '4 agentes disponíveis'}</span>
-            <div className="user-avatar">RC</div>
+            <span className="badge">{busy ? 'Equipe trabalhando' : '4 agentes disponíveis'}</span>
+            <div className="user-avatar">{initials}</div>
           </div>
         </header>
-        <main>
+        <main ref={pageContent}>
+          {page === 'result' && selected === retryNotice && retryNotice && (
+            <Feedback
+              tone="success"
+              action={
+                <button className="button small" onClick={() => setRetryNotice(null)}>
+                  Dispensar
+                </button>
+              }
+            >
+              Solicitação de nova tentativa aceita. Acompanhe o andamento abaixo.
+            </Feedback>
+          )}
           {error && <p className="error mb-5">{error}</p>}
           {!connected && (
             <p className="hint mb-5">
@@ -228,94 +311,86 @@ export default function App() {
             </p>
           )}
           {page === 'create' && (
-            <>
-              <div className="hero">
+            <div className="campaign-create-page">
+              <div className="campaign-page-heading">
                 <div>
-                  <p className="eyebrow">DA IDEIA À CAMPANHA</p>
-                  <h1>
-                    Vamos criar algo
-                    <br />
-                    <em>que chama atenção.</em>
-                  </h1>
-                  <p>
-                    Seu briefing. Quatro especialistas.
-                    <br />
-                    Uma campanha com a cara da Real Center.
-                  </p>
+                  <h1>Nova campanha</h1>
+                  <p className="muted text-sm">Crie conteúdo com a identidade da {brandName}.</p>
                 </div>
-                <div className="hero-art" aria-hidden="true">
-                  <span className="orbit o1" />
-                  <span className="orbit o2" />
-                  <span className="hero-sticker">
-                    <Sparkles size={36} />
-                  </span>
-                  <span className="floating-tag">100% foco em marketing ↗</span>
+                {historical.length > 0 && (
+                  <button type="button" className="button" onClick={() => setPage('gallery')}>
+                    Ver biblioteca <ArrowUpRight size={15} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <CampaignForm
+                key={draft?.id || 'new'}
+                initial={draft}
+                products={media.filter((m) => m.product)}
+                busy={busy || !connected || !config}
+                activityBusy={busy}
+                configured={config?.configured}
+                models={config?.models || []}
+                imageModels={config?.image_models || []}
+                onSubmit={create}
+                onAssist={assist}
+                onProductSaved={refresh}
+              />
+              <details className="campaign-team-guide">
+                <summary>Como sua equipe trabalha</summary>
+                <div className="campaign-team-grid">
+                  {[
+                    ['Director', 'Define a estratégia e coordena.'],
+                    ['Social Media', 'Planeja conteúdo e calendário.'],
+                    ['Copywriter', 'Escreve títulos e legendas.'],
+                    ['Creative', 'Prepara a direção visual.'],
+                  ].map(([title, desc]) => (
+                    <div key={title}>
+                      <strong>{title}</strong>
+                      <p className="muted text-xs">{desc}</p>
+                    </div>
+                  ))}
                 </div>
-              </div>
-              <div className="grid xl:grid-cols-[minmax(0,1fr)_290px] gap-6 items-start">
-                <CampaignForm
-                  key={draft?.id || 'new'}
-                  initial={draft}
-                  products={media.filter((m) => m.product)}
-                  busy={!!active || !connected || !config}
-                  configured={config?.configured}
-                  models={config?.models || []}
-                  imageModels={config?.image_models || []}
-                  onSubmit={create}
-                  onAssist={(payload) => post('/api/brief-assist', payload, config.token)}
-                />
-                <aside className="space-y-5">
-                  <section className="panel p-6">
-                    <p className="eyebrow mb-5">COMO SUA EQUIPE TRABALHA</p>
-                    {[
-                      ['01', 'Director', 'Define a estratégia e coordena.'],
-                      ['02', 'Social Media', 'Planeja conteúdo e calendário.'],
-                      ['03', 'Copywriter', 'Escreve headlines e legendas.'],
-                      ['04', 'Creative', 'Prepara a direção visual.'],
-                    ].map(([n, title, desc]) => (
-                      <div className="process" key={n}>
-                        <span>{n}</span>
-                        <div>
-                          <strong>{title}</strong>
-                          <p>{desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                    <p className="muted text-xs mt-4">
-                      Depois da revisão, o app produz a imagem quando solicitada.
-                    </p>
-                  </section>
-                  {historical.length > 0 && (
-                    <section className="panel overflow-hidden">
-                      <img
-                        className="inspiration"
-                        src={historical.at(-1).url}
-                        alt="Arte anterior da Real Center"
-                      />
-                      <div className="p-5">
-                        <p className="eyebrow">FEITO POR AQUI</p>
-                        <p className="text-sm font-semibold mt-2">
-                          Referências que já fazem parte da nossa história.
-                        </p>
-                        <button
-                          className="text-sm text-orange-700 mt-4 flex gap-2 items-center"
-                          onClick={() => setPage('gallery')}
-                        >
-                          Explorar biblioteca <ArrowUpRight size={15} />
-                        </button>
-                      </div>
-                    </section>
-                  )}
-                </aside>
-              </div>
-            </>
+                <p className="muted text-xs">
+                  Depois da revisão, as artes são produzidas quando solicitadas.
+                </p>
+              </details>
+            </div>
           )}
           {page === 'references' && (
-            <References token={config?.token} connected={connected} onUse={useReference} />
+            <References
+              key={route}
+              token={session?.csrf || config?.token}
+              connected={connected}
+              onUse={useReference}
+              onSaved={refresh}
+            />
           )}
-          {['erp', 'ads'].includes(page) && <IntegrationModules type={page} />}
-          {page === 'system' && <SystemCatalog />}
-          {page === 'usage' && <SystemCatalog usageOnly />}
+          {enabled('marketing') && (
+            <div hidden={page !== 'consultations'}>
+              <Consultations
+                config={config}
+                busy={busy || !connected}
+                onConsult={consult}
+                runs={runs}
+              />
+            </div>
+          )}
+          {page === 'erp' && <IntegrationModules only="erp" />}
+          {page === 'ads' && <IntegrationModules only="meta_ads" />}
+          {page === 'logs' && session?.role === 'OWNER' && <Logs />}
+          {page === 'usage' && session?.role === 'OWNER' && <AgentUsage />}
+          {['config', 'account', 'security', 'store', 'brandkit'].includes(page) && (
+            <Settings
+              page={page}
+              session={session}
+              onUpdated={onAccountUpdated}
+              onNavigate={setPage}
+            />
+          )}
+          {page === 'admin' && session?.role === 'OWNER' && (
+            <AdminPanel onModulesChanged={onAccountUpdated} />
+          )}
           {page === 'history' && (
             <>
               <div className="page-title">
@@ -343,9 +418,10 @@ export default function App() {
                         </div>
                         <div className="min-w-0 flex-1 text-left">
                           <strong className="block truncate">
-                            {run.outputs.brief?.request ||
+                            {run.title ||
+                              run.outputs.brief?.request ||
                               run.outputs.campaign?.brief?.request ||
-                              'Campanha Real Center'}
+                              `Campanha ${brandName}`}
                           </strong>
                           <p className="muted text-xs mt-2">
                             {run.events[0]
@@ -354,12 +430,13 @@ export default function App() {
                             ·{' '}
                             {run.events[0]?.mode === 'demo'
                               ? 'Demonstração'
-                              : run.events[0]?.model?.split(':').pop() || 'Geração com IA'}
+                              : modelLabel(run.events[0]?.model) || 'Geração com IA'}
                           </p>
                         </div>
                         <span className="badge">
                           {
                             {
+                              queued: 'Na fila',
                               running: 'Em andamento',
                               completed: 'Concluída',
                               failed: 'Interrompida',
@@ -403,7 +480,7 @@ export default function App() {
                   <CampaignResults
                     key={selected}
                     run={selectedRun}
-                    busy={!!active || !connected}
+                    busy={busy || !connected}
                     onImage={image}
                     connected={connected}
                   />
@@ -414,79 +491,32 @@ export default function App() {
             </>
           )}
           {page === 'gallery' && (
-            <>
-              <div className="page-title">
-                <div>
-                  <p className="eyebrow">ACERVO REAL CENTER</p>
-                  <h1>Biblioteca de artes</h1>
-                  <p className="muted mt-3">
-                    Artes anteriores e novas imagens produzidas nas campanhas.
-                  </p>
-                </div>
-              </div>
-              <div className="flex flex-wrap gap-4 mb-5">
-                <label className="flex-1 min-w-48">
-                  <span className="field-label">Buscar imagens</span>
-                  <input
-                    type="search"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Nome da imagem"
-                  />
-                </label>
-                <label>
-                  <span className="field-label">Ordenar por</span>
-                  <select value={sort} onChange={(e) => setSort(e.target.value)}>
-                    <option value="newest">Mais recentes</option>
-                    <option value="oldest">Menos recentes</option>
-                    <option value="az">A–Z</option>
-                    <option value="za">Z–A</option>
-                  </select>
-                </label>
-              </div>
-              <div className="gallery">
-                {media
-                  .filter(
-                    (m) =>
-                      !m.product &&
-                      m.name !== 'product.png' &&
-                      m.name !== 'product.jpg' &&
-                      !m.name.startsWith('reference.') &&
-                      !m.name.startsWith('brand-reference')
-                  )
-                  .filter((m) =>
-                    m.name.toLocaleLowerCase('pt-BR').includes(search.toLocaleLowerCase('pt-BR'))
-                  )
-                  .sort((a, b) =>
-                    sort === 'az' || sort === 'za'
-                      ? (sort === 'az' ? 1 : -1) *
-                          a.name.localeCompare(b.name, 'pt-BR', { numeric: true }) ||
-                        a.id.localeCompare(b.id)
-                      : (sort === 'newest' ? -1 : 1) *
-                          ((a.created_at || 0) - (b.created_at || 0)) || a.id.localeCompare(b.id)
-                  )
-                  .map((m) => (
-                    <figure className="panel overflow-hidden" key={m.id}>
-                      <a href={m.url} target="_blank" rel="noreferrer">
-                        <img loading="lazy" src={m.url} alt={m.name} />
-                      </a>
-                      <figcaption className="p-4">
-                        <p className="text-sm truncate font-semibold">{m.name}</p>
-                        <a
-                          className="text-xs text-orange-700 inline-block mt-3"
-                          href={m.url}
-                          download={m.name}
-                        >
-                          Baixar imagem ↗
-                        </a>
-                      </figcaption>
-                    </figure>
-                  ))}
-              </div>
-            </>
+            <Library
+              media={media}
+              brandName={brandName}
+              token={session?.csrf || config?.token}
+              busy={busy || !connected}
+              onDeleted={(item) => {
+                setMedia((current) => current.filter((entry) => entry.id !== item.id));
+                refresh();
+              }}
+              onUseProduct={
+                enabled('campaigns')
+                  ? (item) => {
+                      setDraft({ id: `product-${item.id}`, product_id: item.id });
+                      setPage('create');
+                    }
+                  : null
+              }
+              onUploadProduct={
+                enabled('references')
+                  ? () => navigate(STUDIO_ROUTES.references + '?type=product')
+                  : null
+              }
+            />
           )}
           <footer>
-            Real Center Studio <span>Campanhas em rascunho · revise antes de publicar</span>
+            {brandName} Studio <span>Campanhas em rascunho · revise antes de publicar</span>
           </footer>
         </main>
       </div>

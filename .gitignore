@@ -1,4 +1,5 @@
 .env
+**/.model-keys/
 .env.*
 !.env.example
 **/.venv/
@@ -9,11 +10,17 @@
 **/.pytest_cache/
 **/build/
 **/dist/
-.architecture-work/
-.test-tmp*/
+# Agent scratch lands anywhere in the tree, not only at the root.
+**/.architecture-work/
+**/.test-tmp*/
+**/.test-work/
 graphify-out/
 var/
+data/
+backups/
 realcenter-marketing-ai/campaigns/
 realcenter-marketing-ai/brand/
 .vscode/
 *.log
+# Development data is independent of production and may contain private model keys.
+.dev-data/

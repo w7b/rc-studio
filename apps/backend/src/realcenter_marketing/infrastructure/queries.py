@@ -1,19 +1,20 @@
 from realcenter_marketing.application.diagnostics import report
-from . import references
+from . import references, reference_editor, media_library
 from .persistence.filesystem import snapshot, media_catalog, read_json, run_directory, OUTPUTS
 from .persistence.campaign_repository import FileCampaignRepository
-from .system_catalog import system_activity, usage_audit
+from .logs import system_activity, usage_audit
 
 
 class LocalStudioQueries:
-    def __init__(self, root):
+    def __init__(self, root, *, editor_config=None):
         self.root = root
+        self.editor_config = editor_config
 
     def runs(self, active_id):
         return snapshot(self.root, active_id)
 
     def media(self):
-        return [{k: m[k] for k in ('id', 'name', 'url', 'product', 'run_id', 'created_at')}
+        return [{k: m[k] for k in ('id', 'name', 'title', 'url', 'product', 'run_id', 'created_at')}
                 for m in media_catalog(self.root).values()]
 
     def media_file(self, key):
@@ -31,6 +32,15 @@ class LocalStudioQueries:
 
     def save_reference(self, request):
         return references.save_reference(self.root, request)
+
+    def delete_image(self, key, source):
+        return media_library.delete_image(self.root, key, source)
+
+    def reference_editor_options(self):
+        return reference_editor.editor_options(self.editor_config() if self.editor_config else None)
+
+    def edit_reference(self, request):
+        return reference_editor.edit_reference(self.root, request, config=self.editor_config() if self.editor_config else None)
 
     def activity(self):
         return system_activity(self.root)

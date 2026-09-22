@@ -1,0 +1,32 @@
+# TLS terminates here; the studio never speaks TLS itself (http.server is not an edge
+# server: no header limits, no slowloris protection, no HTTP/2).
+#
+#   REALCENTER_PUBLIC_HOST=studio.exemplo.com.br
+#   REALCENTER_PUBLIC_SCHEME=https
+#
+# Both are required: the Origin check derives from Host, and the scheme cannot be
+# inferred from the socket once TLS ends at the proxy.
+{$STUDIO_DOMAIN:studio.exemplo.com.br} {
+	encode gzip
+
+	# Host must be preserved: local_host() and the CSRF Origin check both read it.
+	reverse_proxy studio:8765 {
+		header_up Host {host}
+		header_up X-Forwarded-Proto {scheme}
+		# Long campaigns answer 202 immediately, but media downloads can be slow.
+		transport http {
+			read_timeout 300s
+			write_timeout 300s
+		}
+	}
+
+	# Matches the server's own cap, so an oversized upload is rejected at the edge.
+	request_body {
+		max_size 23MB
+	}
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+}

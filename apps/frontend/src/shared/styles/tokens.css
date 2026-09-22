@@ -1,0 +1,98 @@
+/* Canonical UI tokens. Components consume semantic aliases; store themes override --brand-*. */
+:root {
+  /* Brand and readable foregrounds.
+
+     Neutral, and deliberately light rather than dark. #202020 and #353535 read well as
+     surfaces but fail as an accent on this palette: against the #171717 panel they score
+     1.1 and 1.46, far under the 3.0 a control needs to look clickable at all, so the
+     primary button would vanish into the card behind it. A light neutral scores 14.2 and
+     keeps the monochrome look. A store that sets its own colour still overrides these. */
+  --brand: #e5e5e5;
+  --brand-strong: #fafafa;
+  --brand-soft: #d4d4d4;
+  --brand-muted: #737373;
+  --brand-ring: #d4d4d4;
+  --brand-accent: #a3a3a3;
+  --on-light: #0a0a0a;
+  --on-dark: #fafafa;
+  --brand-contrast: var(--on-light);
+  --brand-wash: color-mix(in srgb, var(--brand) 10%, var(--surface-1));
+  --brand-line: color-mix(in srgb, var(--brand) 30%, var(--line));
+  --brand-line-hover: color-mix(in srgb, var(--brand) 45%, transparent);
+
+  /* Neutral surfaces: page, inset fields, panels, raised/hover controls. */
+  --surface-0: #131313;
+  --surface-1: #171717;
+  --surface-2: #202020;
+  --surface-3: #353535;
+  --line: #2e2e2e;
+  --line-strong: #404040;
+  --line-hover: #525252;
+  --line-soft: color-mix(in srgb, var(--text) 7%, transparent);
+  --text: #e5e5e5;
+  --text-muted: #a3a3a3;
+  --text-dim: #737373;
+
+  /* Shared controls and forms. Autofill uses the same field surface. */
+  --control-background: var(--surface-2);
+  --control-hover: var(--surface-3);
+  --control-line: color-mix(in srgb, var(--text) 13%, transparent);
+  --control-line-hover: color-mix(in srgb, var(--text) 22%, transparent);
+  --control-radius: 10px;
+  --field-background: var(--surface-1);
+  --field-border: var(--line-strong);
+  --field-border-hover: var(--line-hover);
+  --focus-ring: 0 0 0 2px color-mix(in srgb, var(--brand) 12%, transparent);
+
+  /* Feedback keeps semantic colors separate from neutral surfaces. */
+  --danger: #d6453e;
+  --danger-text: #ff9b95;
+  --danger-surface: color-mix(in srgb, var(--danger) 14%, var(--surface-1));
+  --danger-line: color-mix(in srgb, var(--danger) 50%, transparent);
+  --success: #3ca06e;
+  --success-text: #79d3a5;
+  --success-surface: color-mix(in srgb, var(--success) 18%, var(--surface-1));
+  --warning-text: #e7b96b;
+  --warning-surface: color-mix(in srgb, var(--warning-text) 12%, var(--surface-1));
+  --warning-line: color-mix(in srgb, var(--warning-text) 45%, transparent);
+  --whatsapp: #25d366;
+  --whatsapp-surface: color-mix(in srgb, var(--whatsapp) 8%, var(--surface-1));
+  --whatsapp-line: color-mix(in srgb, var(--whatsapp) 30%, transparent);
+
+  /* Glass, overlays and elevation derive from the palette. */
+  --glass: color-mix(in srgb, var(--surface-1) 50%, transparent);
+  --glass-blur: 8px;
+  --spotlight-radius: 240px;
+  --spotlight-color: color-mix(in srgb, var(--brand) 18%, transparent);
+  --surface-overlay: color-mix(in srgb, var(--surface-0) 74%, transparent);
+  --surface-sticky: color-mix(in srgb, var(--surface-1) 92%, transparent);
+  --backdrop: color-mix(in srgb, var(--surface-0) 66%, transparent);
+  --shadow-color: #000;
+  --shadow-menu: 0 8px 30px color-mix(in srgb, var(--shadow-color) 24%, transparent);
+  --shadow-modal: 0 24px 60px color-mix(in srgb, var(--shadow-color) 50%, transparent);
+  --shadow-brand: 0 3px 14px color-mix(in srgb, var(--brand) 15%, transparent);
+  --shadow-card-hover: 0 8px 32px color-mix(in srgb, var(--brand) 7%, transparent);
+  --mask-ink: #000;
+
+  --scroll-thumb: var(--line-hover);
+  --scroll-track: transparent;
+  --scroll-hover: var(--text-dim);
+  --scroll-active: var(--text-muted);
+  --space-field: 8px;
+  --space-content: 16px;
+  --space-section: 24px;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-duration: 240ms;
+  --z-header: 40;
+  --z-menu: 100;
+
+  /* Public menu customization. */
+  --public-menu-color: 187, 187, 187;
+  --public-menu-background: rgba(var(--public-menu-color), 0.31);
+  --public-menu-border: rgba(var(--public-menu-color), 0.42);
+  --public-menu-blur: 13.3px;
+  --public-menu-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 30px rgba(0, 0, 0, 0.1);
+  --public-menu-width: 1080px;
+  --public-menu-radius: 16px;
+  --public-menu-top: 18px;
+}

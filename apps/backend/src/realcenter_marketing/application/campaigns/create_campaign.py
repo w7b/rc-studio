@@ -1,8 +1,9 @@
-from realcenter_marketing.domain.campaigns import Campaign, CampaignBrief, DirectorReview, CarouselCard
+from realcenter_marketing.domain.campaigns import Campaign, CampaignBrief, CreativeBrief, DirectorReview, CarouselCard
 from realcenter_marketing.application.orchestration import SPECIALIST_STEPS
 from .ports import AgentRuntime, Journal
 
-async def create_campaign(brief: CampaignBrief, runtime: AgentRuntime, *, demo=False, journal: Journal | None = None) -> Campaign:
+async def create_campaign(brief: CampaignBrief, runtime: AgentRuntime, *, demo=False,
+                         journal: Journal | None = None, deliverables=None) -> Campaign:
     result = await runtime(brief)
     required = {role for role, _ in SPECIALIST_STEPS}
     if set(result.outputs) != required:
@@ -24,9 +25,13 @@ async def create_campaign(brief: CampaignBrief, runtime: AgentRuntime, *, demo=F
             asset.dimensions = f'{p["width"]}x{p["height"]} px ({p["ratio"]})'
     if journal:
         journal.save('creative', result.outputs['creative'])
+    # The store decides which formats are mandatory. Re-validating here is what turns the
+    # declared deliverables into an enforced contract rather than a hint in the prompt.
+    creative = CreativeBrief.model_validate(result.outputs['creative'].model_dump(),
+                                            context={'deliverables': deliverables})
     return Campaign(
         execution_mode="demo" if demo else "live", brief=brief,
         director=DirectorReview.model_validate(result.director),
         social=result.outputs["social_media"], copywriting=result.outputs["copywriter"],
-        creative=result.outputs["creative"], delegation_log=result.delegation_log,
+        creative=creative, delegation_log=result.delegation_log,
     )

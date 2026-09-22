@@ -30,7 +30,7 @@ def test_agent_folder_aliases_preserve_manifest_ids(tmp_path):
     assert agent_directory(tmp_path, 'creative').name == 'creative_producer'
     assert load_manifest(tmp_path, 'creative').id == 'A20'
     assert agent_directory(tmp_path, 'performance').name == 'performance_marketing'
-    assert load_manifest(tmp_path, 'performance').status == 'planned'
+    assert load_manifest(tmp_path, 'performance').status == 'active'
     manifest = load_manifest(tmp_path, 'creative')
     assert prompt_version(manifest, 'one', 'policy') != prompt_version(manifest, 'two', 'policy')
 
@@ -44,6 +44,7 @@ def test_explicit_data_path_and_static_path_are_independent(tmp_path, monkeypatc
 
 
 def test_http_serves_configured_static_build_and_preserves_read_contracts(tmp_path, monkeypatch):
+    monkeypatch.setenv('NVIDIA_API_KEY', 'nvapi-fixture')
     static = tmp_path / 'web'
     static.mkdir()
     (static / 'index.html').write_text('<html>studio</html>', encoding='utf-8')
@@ -57,8 +58,15 @@ def test_http_serves_configured_static_build_and_preserves_read_contracts(tmp_pa
         config = json.load(urlopen(base + '/api/config'))
         assert set(config) == {'token', 'configured', 'model', 'image_model',
                                'models', 'image_models'}
-        assert [option['id'] for option in config['image_models']] == ['openai:gpt-image-2', 'nvidia:black-forest-labs/flux.1-dev']
-        assert json.load(urlopen(base + '/api/runs')) == {'runs': [], 'active_id': None}
+        assert [option['id'] for option in config['image_models']] == [
+            'openai:gpt-image-2', 'nvidia:black-forest-labs/flux.1-dev', 'qwen:Qwen/Qwen-Image-2.1']
+        nemotron = next(option for option in config['models']
+                        if option['id'] == 'nvidia:nvidia/nemotron-3-ultra-550b-a55b')
+        # Offered for everything, including as Director. The public shape no longer
+        # carries a delegation capability because nothing asks a model to delegate.
+        assert nemotron['available'] and 'delegates' not in nemotron
+        assert nemotron['label'] == 'Nemotron 3 Ultra · NVIDIA'
+        assert json.load(urlopen(base + '/api/runs')) == {'runs': [], 'active_id': None, 'busy': False}
         assert json.load(urlopen(base + '/api/media')) == []
         assert len(json.load(urlopen(base + '/api/formats'))) == 6
         assert json.load(urlopen(base + '/api/system/activity')) == []

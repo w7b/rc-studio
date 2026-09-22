@@ -1,16 +1,128 @@
+name: studio-ai
+
+x-database-environment: &database-environment
+  # Docker runs the complete, authenticated platform by default.
+  REALCENTER_DEPLOYMENT_MODE: ${STUDIO_MODE:-shared}
+  REALCENTER_DATA_ROOT: /app/data/tenants/default
+  REALCENTER_TENANTS_ROOT: /app/data/tenants
+  DATABASE_URL: ${DATABASE_URL:-}
+  # Separate values safely support passwords containing URI-special characters.
+  PGHOST: db
+  PGPORT: "5432"
+  PGDATABASE: ${POSTGRES_DB:-studio}
+  PGUSER: ${POSTGRES_USER:-studio}
+  PGPASSWORD: ${POSTGRES_PASSWORD:-studio}
+
 services:
-  studio:
-    build: .
+  nginx:
+    image: nginx:stable-alpine
     ports:
-      - "127.0.0.1:8765:8765"
-    env_file:
-      - path: ./realcenter-marketing-ai/.env
-        required: false
+      - "${STUDIO_BIND_ADDRESS:-127.0.0.1}:${STUDIO_HTTP_PORT:-8765}:8080"
+    environment:
+      NGINX_UPSTREAM: studio:8765
+      NGINX_ENVSUBST_FILTER: ^NGINX_UPSTREAM$
     volumes:
-      - ./realcenter-marketing-ai/campaigns:/app/realcenter-marketing-ai/campaigns
-      - ./realcenter-marketing-ai/brand:/app/realcenter-marketing-ai/brand:ro
+      - ./deploy/nginx/templates:/etc/nginx/templates:ro
+      - ./deploy/nginx/snippets:/etc/nginx/snippets:ro
+    depends_on:
+      studio:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--header=Host: localhost:8765", "-O", "/dev/null", "http://127.0.0.1:8080/api/config"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    read_only: true
+    tmpfs:
+      - /etc/nginx/conf.d
+      - /var/cache/nginx
+      - /var/run
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  studio:
+    build:
+      context: .
+      target: runtime
+    expose:
+      - "8765"
+    env_file:
+      - path: ./data/platform/.env
+        required: false
+    environment:
+      <<: *database-environment
+      # Credentials are read from here and never from a store's own data root.
+      REALCENTER_ENV_ROOT: /app/data/platform
+      REALCENTER_PUBLIC_HOST: localhost:${STUDIO_HTTP_PORT:-8765},127.0.0.1:${STUDIO_HTTP_PORT:-8765},${REALCENTER_PUBLIC_HOST:-}
+      REALCENTER_PUBLIC_SCHEME: ${REALCENTER_PUBLIC_SCHEME:-http}
+      # Trust only the nginx service's current IP, resolved via Docker DNS.
+      REALCENTER_TRUSTED_PROXIES: nginx
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    volumes:
+      # Includes tenant profiles, per-store Brand Kits and private model settings.
+      # Only the backend and worker receive this mount; never the edge proxy.
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
     stop_grace_period: 4810s
     restart: unless-stopped
     init: true
     security_opt:
       - no-new-privileges:true
+
+  worker:
+    build:
+      context: .
+      target: runtime
+    # Same image, different command: campaign execution moves out of the request process
+    # so a deploy of the web service stops killing runs in flight.
+    command: ["python", "scripts/worker.py"]
+    healthcheck:
+      test: ["CMD", "python", "scripts/worker.py", "--healthcheck"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    environment:
+      <<: *database-environment
+      REALCENTER_ENV_ROOT: /app/data/platform
+    env_file:
+      - path: ./data/platform/.env
+        required: false
+    volumes:
+      - ./data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles: ["shared"]
+    stop_grace_period: 4810s
+    restart: unless-stopped
+    init: true
+    security_opt:
+      - no-new-privileges:true
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-studio}
+      POSTGRES_USER: ${POSTGRES_USER:-studio}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-studio}
+    volumes:
+      - studio-db:/var/lib/postgresql/data
+    healthcheck:
+      # The studio applies its schema at boot, so it must not start before the server
+      # is actually accepting connections.
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-studio} -d ${POSTGRES_DB:-studio}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  studio-db:

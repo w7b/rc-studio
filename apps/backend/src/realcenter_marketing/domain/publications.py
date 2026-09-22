@@ -40,7 +40,10 @@ class Publication(BaseModel):
     def instructions(self):
         w, h = self.dimensions
         return (f'Entrega escolhida: {self.kind}, {self.slides} imagem(ns), {w}x{h} px, '
-                f'proporção {PRESETS[self.preset]["ratio"]}. A escolha prevalece sobre sugestões de formatos. '
+                f'proporção {PRESETS[self.preset]["ratio"]}. É esta a peça produzida agora, e estas as '
+                'dimensões; a escolha prevalece sobre qualquer outra proporção sugerida. '
+                'Ela não reduz a lista de entregáveis que o Creative Producer precisa cobrir: os demais '
+                'formatos declarados pela loja seguem no briefing, marcados como não produzidos nesta campanha. '
                 'Stories e capas de Reel: 1080x1920; mantenha texto e logo afastados das bordas. '
                 'Reel é vídeo: esta execução só produz a capa estática. '
                 'Carrossel: planeje e escreva cada card em sequência, com abertura, desenvolvimento e CTA; '

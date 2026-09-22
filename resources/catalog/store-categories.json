@@ -1,0 +1,340 @@
+[
+  {
+    "name": "Supermercado",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Minimercado",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Mercearia",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Atacadista",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Hortifruti",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Açougue",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Peixaria",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Padaria",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Confeitaria",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Cafeteria",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Restaurante",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Lanchonete",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Pizzaria",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Hamburgueria",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Sorveteria",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Distribuidora de bebidas",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Loja de conveniência",
+    "claim_packs": [
+      "alimento"
+    ]
+  },
+  {
+    "name": "Loja de produtos naturais",
+    "claim_packs": [
+      "alimento",
+      "saude"
+    ]
+  },
+  {
+    "name": "Farmácia",
+    "claim_packs": [
+      "saude"
+    ]
+  },
+  {
+    "name": "Perfumaria",
+    "claim_packs": [
+      "saude"
+    ]
+  },
+  {
+    "name": "Loja de cosméticos",
+    "claim_packs": [
+      "saude"
+    ]
+  },
+  {
+    "name": "Petshop",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Agropecuária",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Floricultura",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de roupas",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de calçados",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de acessórios",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Joalheria",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Ótica",
+    "claim_packs": [
+      "saude"
+    ]
+  },
+  {
+    "name": "Papelaria",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Livraria",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de brinquedos",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de presentes",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de eletrônicos",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de informática",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de celulares",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de eletrodomésticos",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de móveis",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de decoração",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de utilidades",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Material de construção",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de tintas",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Ferragista",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Autopeças",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Oficina mecânica",
+    "claim_packs": [
+      "servico"
+    ]
+  },
+  {
+    "name": "Posto de combustível",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Bicicletaria",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Loja de artigos esportivos",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Academia",
+    "claim_packs": [
+      "servico"
+    ]
+  },
+  {
+    "name": "Barbearia",
+    "claim_packs": [
+      "servico"
+    ]
+  },
+  {
+    "name": "Salão de beleza",
+    "claim_packs": [
+      "servico"
+    ]
+  },
+  {
+    "name": "Estúdio de estética",
+    "claim_packs": [
+      "saude",
+      "servico"
+    ]
+  },
+  {
+    "name": "Lavanderia",
+    "claim_packs": [
+      "servico"
+    ]
+  },
+  {
+    "name": "Gráfica",
+    "claim_packs": [
+      "servico"
+    ]
+  },
+  {
+    "name": "Loja virtual",
+    "claim_packs": [
+      "varejo_geral"
+    ]
+  },
+  {
+    "name": "Serviços locais",
+    "claim_packs": [
+      "servico"
+    ]
+  }
+]

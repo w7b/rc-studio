@@ -1,0 +1,18 @@
+{
+  "profile": "product-admin",
+  "sourceRoots": ["apps/frontend/src"],
+  "locale": "pt-BR",
+  "canonicalMap": "UX-CONTRACT.md",
+  "requiredCapabilities": ["Select/Listbox", "Form", "Scrollbar", "Toast", "CRUD"],
+  "ownership": {"Select/Listbox": "native", "Date": "native"},
+  "requiredCommands": ["unit", "build", "format"],
+  "commands": {
+    "unit": "node --test apps/frontend/tests/routes.test.js",
+    "build": "npm --prefix apps/frontend run build",
+    "format": "npm --prefix apps/frontend run format:check"
+  },
+  "evidence": {
+    "crudFullFlow": "apps/frontend/tests/ui-smoke.cjs",
+    "failurePaths": "apps/backend/tests/test_admin.py"
+  }
+}

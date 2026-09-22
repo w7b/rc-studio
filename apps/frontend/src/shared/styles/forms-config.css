@@ -1,0 +1,172 @@
+/* --- Melhorar briefing --- */
+.brief-dialog {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-2);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+.brief-dialog[open] {
+  animation: modal-in 0.2s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+.brief-dialog h2 {
+  font-size: 1.2rem;
+}
+.brief-dialog .caption {
+  padding: 14px 16px;
+  border-radius: 11px;
+  border: 1px solid var(--line-soft);
+  background: var(--surface-1);
+  line-height: 1.65;
+}
+/* Each question is one short line plus one input, so a full-width column per question
+   was mostly empty space and pushed the submit button out of view. */
+.brief-questions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.brief-questions .nested {
+  border-left: 2px solid var(--brand-muted);
+  border-radius: 0 10px 10px 0;
+  padding: 12px 14px;
+}
+.brief-questions .field-label {
+  min-height: 2.6em;
+  line-height: 1.35;
+}
+.brief-questions input {
+  margin-top: 8px;
+}
+@media (max-width: 720px) {
+  .brief-questions {
+    grid-template-columns: 1fr;
+  }
+  .brief-questions .field-label {
+    min-height: 0;
+  }
+}
+
+/* --- Config · Brand Kit --- */
+.kit-warning {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(214, 69, 62, 0.45);
+  background: rgba(214, 69, 62, 0.12);
+  color: #ff9b95;
+  font-size: 0.9rem;
+}
+.kit-extras {
+  margin-bottom: 14px;
+  font-size: 0.84rem;
+}
+.kit-files {
+  overflow: hidden;
+}
+.kit-file + .kit-file {
+  border-top: 1px solid var(--line-soft);
+}
+.kit-file > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 4px 18px 4px 6px;
+}
+.kit-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1 1 auto;
+  padding: 14px 12px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 10px;
+}
+.kit-toggle:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+.kit-toggle svg {
+  color: var(--brand);
+  flex: 0 0 auto;
+}
+.kit-toggle strong {
+  display: block;
+  font-size: 0.95rem;
+}
+.kit-toggle small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+.kit-state {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.kit-state code {
+  color: var(--text-dim);
+  font-size: 0.74rem;
+}
+.kit-missing,
+.kit-dirty,
+.kit-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.kit-missing {
+  background: rgba(214, 69, 62, 0.18);
+  color: #ff9b95;
+}
+.kit-dirty {
+  background: color-mix(in srgb, var(--brand) 18%, transparent);
+  color: var(--brand-soft);
+}
+.kit-ok {
+  background: rgba(60, 160, 110, 0.18);
+  color: #79d3a5;
+}
+.kit-editor {
+  padding: 0 18px 18px;
+}
+.kit-editor textarea {
+  width: 100%;
+  min-height: 320px;
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--surface-0);
+  color: var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.84rem;
+  line-height: 1.65;
+  resize: vertical;
+}
+.kit-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.kit-actions .button {
+  min-height: 40px;
+  padding: 0 18px;
+}
+.kit-note {
+  margin-top: 16px;
+  font-size: 0.84rem;
+}

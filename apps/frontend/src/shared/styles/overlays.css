@@ -1,0 +1,178 @@
+/* --- Motion ---
+   Buttons had a flat background/colour fade. These add a small press response and a
+   settle on hover, which is what makes a control feel like it registered the click.
+   Everything here is disabled under prefers-reduced-motion, further down the file. */
+.button,
+.logout-button,
+.action-trigger {
+  transition:
+    background 0.16s ease,
+    border-color 0.16s ease,
+    color 0.16s ease,
+    transform 0.12s cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 0.16s ease;
+  will-change: transform;
+}
+.button:hover:not(:disabled),
+.logout-button:hover {
+  transform: translateY(-1px);
+}
+.button:active:not(:disabled),
+.logout-button:active {
+  transform: translateY(0) scale(0.98);
+  transition-duration: 0.05s;
+}
+.button.primary:hover:not(:disabled) {
+  box-shadow: var(--shadow-brand);
+}
+.button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.button:focus-visible,
+.logout-button:focus-visible {
+  outline: 1px solid var(--brand-ring);
+  outline-offset: 0px;
+}
+
+.action-menu {
+  animation: menu-in 0.14s cubic-bezier(0.2, 0.8, 0.3, 1);
+  transform-origin: top right;
+}
+.action-menu-left {
+  transform-origin: top left;
+}
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.97);
+  }
+}
+.action-menu .button:hover:not(:disabled) {
+  transform: none;
+  background: var(--control-hover);
+}
+
+/* --- Modal --- */
+.modal {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  max-width: min(760px, calc(100vw - 32px));
+  width: 100%;
+  color: inherit;
+}
+.modal::backdrop {
+  background: var(--backdrop);
+  backdrop-filter: blur(3px);
+  animation: fade-in 0.16s ease;
+}
+.modal[open] .modal-card {
+  animation: modal-in 0.2s cubic-bezier(0.2, 0.8, 0.3, 1);
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+}
+.modal-card {
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--control-line);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-modal);
+}
+.modal-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.modal-card h2 {
+  margin: 0 0 4px;
+  font-size: 1.2rem;
+}
+.modal-close {
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* --- Store profile --- */
+.store-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+  margin-top: 8px;
+}
+.store-wide,
+.admin-wide {
+  grid-column: 1 / -1;
+}
+.store-section {
+  margin: 28px 0 0;
+  padding-top: 20px;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.98rem;
+}
+.store-color {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.store-color input[type='color'] {
+  width: 46px;
+  min-width: 46px;
+  padding: 4px;
+  cursor: pointer;
+}
+.store-deliverables {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.store-deliverables legend {
+  padding: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+.store-deliverables p {
+  margin: 4px 0 10px;
+  font-size: 0.82rem;
+}
+.store-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.account-panel .store-grid + .button,
+.account-panel > .button {
+  margin-top: 22px;
+}
+
+.account-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.account-stack > * {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+}

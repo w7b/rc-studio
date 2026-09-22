@@ -28,7 +28,7 @@ def test_consultation_runs_only_creative_producer(settings, demo, tmp_path):
 
 def test_consultation_failure_releases_lock_and_redacts(tmp_path, monkeypatch):
     monkeypatch.setattr('realcenter_marketing.bootstrap.settings.Settings.validate_live', lambda self: None)
-    async def fail(*args):
+    async def fail(*args, **kwargs):
         raise RuntimeError('private API response')
     monkeypatch.setattr('realcenter_marketing.bootstrap.services.improve_brief', fail)
     service = CampaignService(tmp_path)

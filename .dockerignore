@@ -11,7 +11,15 @@
 **/tests
 **/graphify-out
 **/*.log
-.architecture-work
-.test-tmp*
+**/.architecture-work
+**/.test-tmp*
+# Scratch directories agents create in-tree. They are never part of an image, and a
+# permission-denied cache inside one aborts the whole build context upload.
+**/.test-work
+**/*-work
+**/pytest-cache
 realcenter-marketing-ai
+data
+.dev-data
+backups
 front-end

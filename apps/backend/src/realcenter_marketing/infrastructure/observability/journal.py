@@ -58,6 +58,15 @@ class RunJournal:
         temporary.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
         temporary.replace(target)
 
+    def _usage_entries(self, data):
+        if 'entries' not in data:
+            from realcenter_marketing.infrastructure.admin_metrics import events_from, timestamp, usage_record
+            dates = [stamp for e in events_from(self.directory / 'events.jsonl')
+                     if (stamp := timestamp(e.get('time'))) is not None]
+            baseline = usage_record(data, min(dates) if dates else None)
+            data['entries'] = [{**baseline, 'legacy': True}] if baseline['requests'] else []
+        return data['entries']
+
     def record_usage(self, agent, model, usage):
         details = usage.input_tokens_details
         cached = int(getattr(details, "cached_tokens", 0) or 0)
@@ -65,6 +74,13 @@ class RunJournal:
         cost = text_cost(model, usage.input_tokens, cached, cache_write, usage.output_tokens)
         with self._usage_lock:
             data = self._usage()
+            entries = self._usage_entries(data)
+            entries.append({'time': datetime.now(timezone.utc).isoformat(),
+                            'requests': int(usage.requests or 0), 'images': 0,
+                            'input_tokens': int(usage.input_tokens or 0),
+                            'output_tokens': int(usage.output_tokens or 0),
+                            'cached_input_tokens': cached, 'known_cost_usd': float(cost or 0),
+                            'unpriced_records': int(cost is None)})
             text = data["text"]
             text["model"] = model
             bucket = text["by_agent"].setdefault(agent, {"requests": 0, "input_tokens": 0,
@@ -90,6 +106,11 @@ class RunJournal:
         cost = image_cost(model, size)
         with self._usage_lock:
             data = self._usage()
+            entries = self._usage_entries(data)
+            entries.append({'time': datetime.now(timezone.utc).isoformat(), 'requests': 1, 'images': 1,
+                            'input_tokens': int((usage or {}).get('input_tokens', 0) or 0),
+                            'output_tokens': int((usage or {}).get('output_tokens', 0) or 0),
+                            'known_cost_usd': float(cost or 0), 'unpriced_records': int(cost is None)})
             image = data["image"]
             image["model"], image["size"], image["quality"] = model, size, "medium"
             image["count"] += 1

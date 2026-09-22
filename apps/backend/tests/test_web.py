@@ -21,18 +21,6 @@ import asyncio
 
 
 @pytest.fixture
-def isolated_root(root, tmp_path):
-    import shutil
-    from realcenter_marketing.infrastructure.resources import resources_root, ROLE_FOLDERS
-    resources = resources_root()
-    for role in ('marketing_director', 'social_media', 'copywriter', 'creative', 'performance', 'marketing_analyst'):
-        shutil.copytree(resources / 'agents' / ROLE_FOLDERS.get(role, role), tmp_path / 'agents' / role)
-    for source, name in ((root / 'brand', 'brand'), (resources / 'policies', 'config'), (resources / 'demo', 'templates')):
-        shutil.copytree(source, tmp_path / name)
-    return tmp_path
-
-
-@pytest.fixture
 def png():
     out = io.BytesIO()
     Image.new('RGB', (1152, 1440), 'orange').save(out, format='PNG')

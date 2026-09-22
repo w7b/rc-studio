@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Sparkles, LoaderCircle, Check, X, HelpCircle } from 'lucide-react';
+import { Sparkles, LoaderCircle, Check, X } from 'lucide-react';
+import FieldHelp from '../../shared/components/FieldHelp.jsx';
 
 /** An answered question becomes a confirmed fact: the same channel the agents already
  *  treat as authoritative, so the next pass fills the gap instead of inventing it. */
@@ -82,7 +83,7 @@ export default function BriefAssistant({
         {loading ? 'Creative Producer está revisando…' : 'Melhorar briefing com Creative Producer'}
       </button>
       <p className="muted text-xs">
-        Revisa sua ideia e aponta informações que faltam antes de criar. Usa a API configurada e
+        Revisa sua ideia e aponta informações que faltam antes de criar. Usa o modelo selecionado e
         consome créditos. {!request.trim() ? 'Escreva sua ideia acima para começar.' : ''}
       </p>
       {error && (
@@ -143,28 +144,30 @@ export default function BriefAssistant({
                   estiver definido — nada é inventado.
                 </p>
               </div>
-              {questions.map((question, index) => (
-                <label className="block nested" key={index}>
-                  <span className="field-label flex items-start gap-2">
-                    <HelpCircle size={14} className="shrink-0 mt-[3px]" />
-                    {question}
-                  </span>
-                  <input
-                    type="text"
-                    maxLength={1000}
-                    value={answers[index] || ''}
-                    placeholder="Sua resposta"
-                    disabled={loading}
-                    onChange={(e) => setAnswers({ ...answers, [index]: e.target.value })}
-                    onKeyDown={(e) => {
-                      // This dialog lives inside the campaign form; Enter must not submit it.
-                      if (e.key !== 'Enter') return;
-                      e.preventDefault();
-                      if (answered.length && !changed) refine();
-                    }}
-                  />
-                </label>
-              ))}
+              <div className="brief-questions">
+                {questions.map((question, index) => (
+                  <label className="block nested" key={index}>
+                    <span className="field-label field-title">
+                      {question}
+                      <FieldHelp text="Responda só o que estiver confirmado. O que ficar em branco vira pendência e não é inventado." />
+                    </span>
+                    <input
+                      type="text"
+                      maxLength={1000}
+                      value={answers[index] || ''}
+                      placeholder="Sua resposta"
+                      disabled={loading}
+                      onChange={(e) => setAnswers({ ...answers, [index]: e.target.value })}
+                      onKeyDown={(e) => {
+                        // This dialog lives inside the campaign form; Enter must not submit it.
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        if (answered.length && !changed) refine();
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
               <button
                 type="button"
                 className="button small"

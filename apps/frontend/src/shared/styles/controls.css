@@ -1,0 +1,116 @@
+/* Shared controls: layout uses Tailwind; state colors consume theme tokens. */
+.search-select-trigger {
+  min-height: 46px;
+  padding: 11px 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--control-radius);
+  background: var(--field-background);
+  color: var(--text);
+}
+.search-select-trigger:hover:not(:disabled) {
+  border-color: var(--line-hover);
+}
+.search-select-trigger:focus-visible {
+  outline: 2px solid var(--brand-ring);
+  outline-offset: 2px;
+}
+.search-select-panel {
+  position: fixed;
+  z-index: 60;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--control-radius);
+  background: var(--surface-1);
+  box-shadow: var(--shadow-modal);
+}
+.search-select-option:hover,
+.search-select-option:focus-visible {
+  background: var(--control-hover);
+  outline: none;
+}
+.search-select-option[aria-selected='true'] {
+  background: var(--brand-wash);
+  color: var(--brand-soft);
+}
+.studio-tooltip {
+  position: fixed;
+  z-index: 100;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 6px 11px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+  font: 400 12px/1.45 var(--font-sans, 'Google Sans', sans-serif);
+  pointer-events: none;
+}
+
+/* A navigation row owns the same radius on every corner. */
+.studio-nav-row {
+  border-radius: var(--control-radius);
+}
+.studio-nav-row.is-active {
+  background: var(--brand-soft);
+  color: var(--brand-contrast);
+}
+.studio-nav-row.is-child {
+  margin-left: 12px;
+}
+.sidebar nav .studio-nav-row a {
+  border-radius: var(--control-radius);
+  margin-left: 0;
+}
+.sidebar nav .studio-nav-row a.nav-child {
+  padding-left: 14px;
+  border-radius: var(--control-radius);
+  border-left: 0;
+}
+.sidebar nav .studio-nav-row.is-active a {
+  background: transparent;
+  color: inherit;
+}
+.sidebar nav .studio-nav-caret {
+  min-height: 40px;
+  width: 30px;
+  padding: 6px;
+  justify-content: center;
+  border-radius: var(--control-radius);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-dim);
+}
+.sidebar nav .studio-nav-caret:hover {
+  color: var(--brand-soft);
+}
+.sidebar nav .studio-nav-row.is-active .studio-nav-caret {
+  color: var(--brand-contrast);
+}
+.sidebar nav .studio-nav-row.is-active .studio-nav-caret:hover {
+  opacity: 0.65;
+}
+.sidebar nav .studio-nav-caret:focus:not(:focus-visible) {
+  outline: none;
+}
+.sidebar nav .studio-nav-caret:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -4px;
+}
+.studio-nav-caret svg {
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+.studio-nav-caret.is-open svg {
+  transform: rotate(90deg);
+}
+.settings-link {
+  text-decoration: none;
+  color: var(--text);
+}
+.settings-link:hover {
+  border-color: var(--brand-line);
+  background: var(--surface-2);
+}
+[aria-label='Seções de configurações'] [aria-current='page'] {
+  border-color: var(--brand-line);
+  color: var(--brand-soft);
+}

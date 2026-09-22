@@ -1,0 +1,628 @@
+/* Authentication shell. Standalone installs never reach these screens. */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: var(--surface-0);
+  color: var(--text);
+}
+.auth-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 28px;
+}
+.auth-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+.auth-lead {
+  margin: 0 0 8px;
+  color: var(--text-muted);
+  font-size: 0.92rem;
+}
+.auth-card input {
+  width: 100%;
+  padding: 10px 12px;
+  /* 16px on small screens keeps iOS from zooming the form on focus. */
+  font-size: 16px;
+  border-radius: 8px;
+}
+.auth-card .button-primary,
+.auth-card .button-secondary {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  text-decoration: none;
+}
+.auth-error {
+  margin: 4px 0 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--danger-surface);
+  color: var(--danger-text);
+  font-size: 0.88rem;
+}
+.auth-divider {
+  margin: 12px 0 0;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+}
+.auth-note {
+  margin: 14px 0 0;
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  text-align: center;
+}
+.spin {
+  animation: auth-spin 0.9s linear infinite;
+}
+@keyframes auth-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spin {
+    animation: none;
+  }
+}
+
+/* The native arrow is painted hard against the right border and ignores padding, so the
+   field looks lopsided next to its 14px left inset. Drawing our own puts the two sides
+   on the same gutter. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  /* Room for the arrow plus the same 14px breathing space used on the left. */
+  padding-right: 38px;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-muted) 50%),
+    linear-gradient(135deg, var(--text-muted) 50%, transparent 50%);
+  background-repeat: no-repeat;
+  background-position:
+    right 20px center,
+    right 14px center;
+  background-size: 6px 6px;
+}
+select::-ms-expand {
+  display: none;
+}
+
+/* Logout sits apart from the navigation: it is not another destination, and a stray
+   click on it costs the user their session. Red because it is the one control here that
+   throws work away. */
+.sidebar-account {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--line-soft);
+}
+.logout-button {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--danger-line);
+  background: var(--danger-surface);
+  color: var(--danger-text);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+}
+.logout-button:hover {
+  background: var(--danger);
+  border-color: var(--danger-line);
+  color: var(--text);
+}
+
+/* --- Product home (public) --- */
+.home-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--surface-sticky);
+  backdrop-filter: blur(8px);
+}
+.home-mark {
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+.home-mark strong {
+  color: var(--brand);
+  margin-left: 2px;
+}
+.home {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 72px 24px 80px;
+  color: var(--text);
+  /* Centred throughout: a left-aligned column this narrow leaves the page looking
+     unfinished on a wide screen. */
+  text-align: center;
+}
+.home-hero h1 {
+  margin: 10px auto 16px;
+  font-size: clamp(1.9rem, 4.4vw, 3rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  max-width: 17ch;
+}
+.home-lead {
+  max-width: 58ch;
+  margin: 0 auto;
+  color: var(--text-muted);
+  line-height: 1.7;
+  font-size: 1.02rem;
+}
+.home-cta {
+  margin-top: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 26px;
+  font-size: 0.96rem;
+}
+.home-section {
+  margin-top: 72px;
+}
+.home-section h2 {
+  margin: 0 0 12px;
+  font-size: 1.35rem;
+  letter-spacing: -0.01em;
+}
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-top: 26px;
+  text-align: left;
+}
+.home-card {
+  padding: 22px;
+  border-radius: 13px;
+  border: 1px solid var(--control-line);
+  background: var(--control-background);
+}
+.home-card svg {
+  color: var(--brand);
+}
+.home-card h3 {
+  margin: 14px 0 8px;
+  font-size: 1rem;
+}
+.home-card p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+.home-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.home-tags li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--control-line);
+  font-size: 0.84rem;
+  color: var(--text);
+}
+.home-tags svg {
+  color: var(--brand);
+}
+.home-footer {
+  margin-top: 80px;
+  padding-top: 36px;
+  border-top: 1px solid var(--line-soft);
+}
+.home-footer p {
+  margin-top: 16px;
+  color: var(--text-dim);
+  font-size: 0.84rem;
+}
+
+/* --- Account --- */
+.account-panel {
+  max-width: 620px;
+  /* Centred, so a narrow card does not sit lopsided in a wide workspace. */
+  margin: 0 auto;
+}
+.account-panel header h2 {
+  margin: 4px 0 6px;
+  font-size: 1.15rem;
+}
+.panel-lead {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+.account-form {
+  margin-top: 24px;
+  padding-top: 22px;
+  border-top: 1px solid var(--line-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.account-form h3 {
+  margin: 0 0 12px;
+  font-size: 0.98rem;
+  font-weight: 600;
+}
+.account-form .field-label {
+  margin-top: 6px;
+}
+.account-form .button {
+  margin-top: 18px;
+  align-self: flex-start;
+  min-height: 42px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.account-done {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: var(--success-surface);
+  color: var(--success-text);
+  font-size: 0.88rem;
+}
+
+/* --- Administration --- */
+.admin-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.admin-total {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 11px;
+  border: 1px solid var(--control-line);
+  background: var(--control-background);
+}
+.admin-total svg {
+  align-self: center;
+  color: var(--brand);
+}
+.admin-total strong {
+  font-size: 1.25rem;
+  font-variant-numeric: tabular-nums;
+}
+.admin-total span {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.admin-total-warn svg {
+  color: var(--danger-text);
+}
+
+.admin-create-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px;
+}
+.admin-create-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 18px;
+}
+.admin-create-actions .button {
+  min-height: 42px;
+  padding: 0 20px;
+}
+
+.admin-invite {
+  margin-bottom: 18px;
+  border-color: var(--brand-line-hover);
+}
+.admin-invite p {
+  margin: 0 0 12px;
+}
+.admin-invite-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.admin-invite code {
+  flex: 1 1 320px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--surface-0);
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+.admin-invite .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+}
+
+/* Flat rows in a single panel. A card per store inside a card gave three levels of
+   identical borders for very little information. */
+.admin-stores {
+  overflow: hidden;
+}
+.admin-store {
+  padding: 18px 22px;
+}
+.admin-store + .admin-store {
+  border-top: 1px solid var(--line-soft);
+}
+.admin-store > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.admin-store-id {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.admin-store-id h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.admin-store-id code {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+}
+/* Row actions collapse into one trigger, so the list reads as data rather than as a
+   wall of buttons repeating down every row. */
+.action-dropdown {
+  position: relative;
+  display: inline-flex;
+}
+.action-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  min-width: 36px;
+  padding: 0 9px;
+}
+.action-menu .button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 38px;
+  text-align: left;
+  white-space: nowrap;
+}
+.action-menu-left {
+  right: auto;
+  left: 0;
+}
+.action-danger {
+  color: var(--danger-text);
+}
+.action-danger:hover {
+  background: var(--danger-surface);
+  border-color: var(--danger-line);
+}
+.admin-status {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.admin-status-active {
+  background: var(--success-surface);
+  color: var(--success-text);
+}
+.admin-status-suspended {
+  background: var(--danger-surface);
+  color: var(--danger-text);
+}
+.admin-empty {
+  margin: 12px 0 0;
+  color: var(--text-muted);
+  font-size: 0.86rem;
+}
+.admin-members {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.admin-members li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 0;
+}
+.admin-members li + li {
+  border-top: 1px solid var(--line-soft);
+}
+.admin-member {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+.admin-member strong {
+  display: block;
+  font-weight: 600;
+  font-size: 0.92rem;
+}
+.admin-member span {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+.admin-role {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+/* The select holds the code only; the explanation sits beside it, so the control stays
+   narrow instead of stretching to fit a sentence. */
+.admin-role select {
+  width: auto;
+  min-width: 118px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+/* Fixed width so the selects line up down the column; without it each row shifts by
+   the length of its own explanation. */
+.admin-role small {
+  width: 130px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.3;
+}
+
+@media (max-width: 820px) {
+  .admin-members li {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .admin-role small {
+    display: none;
+  }
+}
+
+/* --- Logs --- */
+.logs-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.logs-filters select {
+  min-width: 180px;
+}
+.logs-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.logs-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.log-row {
+  display: grid;
+  grid-template-columns: 158px 200px 1fr auto;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 0;
+  border-top: 1px solid var(--line-soft);
+  font-size: 0.86rem;
+}
+.log-row time {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+.log-event {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+.log-row-failed .log-event {
+  color: var(--danger-text);
+}
+.log-meta {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.log-run {
+  color: var(--text-dim);
+  font-size: 0.76rem;
+}
+@media (max-width: 900px) {
+  .log-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}
+
+/* --- Integrations --- */
+.integration-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.integration-card header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.integration-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  font-size: 1.1rem;
+}
+.integration-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+  margin: 20px 0 4px;
+}
+.integration-card .button {
+  margin-top: 18px;
+  min-height: 42px;
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.integration-note {
+  margin-top: 12px;
+  font-size: 0.82rem;
+}

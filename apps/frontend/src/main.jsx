@@ -1,5 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './app/App.jsx';
+import Session from './app/Session.jsx';
+import './shared/styles/tokens.css';
 import './shared/styles/global.css';
-createRoot(document.getElementById('root')).render(<App />);
+import './shared/styles/platform.css';
+import './app/studio-shell.css';
+import './shared/styles/controls.css';
+createRoot(document.getElementById('root')).render(<Session />);

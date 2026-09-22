@@ -2,7 +2,8 @@ import re
 from agents import AgentHooks
 
 class ProgressHooks(AgentHooks):
-    def __init__(self, journal, role, model):
+    def __init__(self, journal, role, model, *, save_output=True):
+        self.save_output = save_output
         self.journal = journal
         self.role = role
         self.model = model
@@ -12,7 +13,8 @@ class ProgressHooks(AgentHooks):
         self.journal.emit("started", agent.name)
 
     async def on_end(self, context, agent, output):
-        self.journal.save(self.role, output)
+        if self.save_output:
+            self.journal.save(self.role, output)
         self.journal.emit("completed", agent.name)
 
     async def on_llm_start(self, context, agent, system_prompt, input_items):

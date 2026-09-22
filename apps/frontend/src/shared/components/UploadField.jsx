@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { UploadCloud, X, Image } from 'lucide-react';
+import { UploadCloud, X } from 'lucide-react';
 
 export default function UploadField({ label, file, onChange, optional = false }) {
   const [preview, setPreview] = useState('');
@@ -37,20 +37,20 @@ export default function UploadField({ label, file, onChange, optional = false })
         }}
       >
         {preview ? <img src={preview} alt={label} /> : <UploadCloud size={24} />}
-        <label className="cursor-pointer">
+        <div>
           <strong>{file ? file.name : 'Clique ou arraste uma imagem'}</strong>
           <span>PNG ou JPEG · até 8 MB</span>
           <input
             aria-label={label}
             type="file"
             accept="image/png,image/jpeg"
-            className="sr-only"
+            className="upload-input"
             onChange={(e) => {
               choose(e.target.files[0]);
               e.target.value = '';
             }}
           />
-        </label>
+        </div>
         {file && (
           <button
             type="button"

@@ -90,8 +90,10 @@ def test_carousel_resume_preserves_finished_cards(settings, demo, tmp_path, monk
 
 def test_director_prefix_stable_and_specialists_keep_full_context(settings, demo):
     asyncio.run(create_campaign(CampaignBrief(request='Produto: teste',confirmed_facts=['Preço: R$ 3']),settings,model=demo))
-    prompts=[c[1] for c in demo.calls if c[0]=='DirectorReview']
-    assert len(prompts)==4 and len(set(prompts))==1
+    # Planning and reviewing share one manifest and one set of instructions, so the
+    # Director's prefix is byte-identical across both of its calls and stays cacheable.
+    prompts=[c[1] for c in demo.calls if c[0] in ('CampaignPlan','DirectorReview')]
+    assert len(prompts)==2 and len(set(prompts))==1
     copy=next(c[1] for c in demo.calls if c[0]=='CopyPack')
     assert demo.responses['SocialPlan']['strategy'] in copy
     assert 'Preço: R$ 3' in copy
