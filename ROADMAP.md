@@ -4,7 +4,7 @@ Objetivo: atender lojas de diferentes segmentos a partir de um deploy compartilh
 com custo mensurável, dados isolados e revisão humana das entregas. O produto não deve
 presumir supermercado, preço promocional, endereço ou alegação não fornecida pela loja.
 
-A arquitetura vigente está em [docs/architecture/blueprint.md](docs/architecture/blueprint.md);
+A arquitetura vigente está em [docs/architecture/blueprint.md](docs/arquitetura.md);
 operação e verificação estão no [README](README.md). Este arquivo concentra pendências e
 decisões aprovadas que ainda precisam de implementação, sem duplicar histórico de sessões.
 

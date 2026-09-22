@@ -27,7 +27,7 @@ de `/api/references`, inclusive produtos recém-salvos. Upload tem precedência 
 referências inexistentes ou de outra loja são recusadas. A origem escolhida no formulário
 controla os campos enviados, sem reutilizar seleção oculta de outra origem.
 
-Execute os checks do [guia de validação](architecture/validation.md). A inspeção manual
+Execute os checks do [guia de validação](arquitetura.md). A inspeção manual
 cobre nenhuma entrada, só produto, só referência e ambos, além dos dois especialistas,
 erros e mobile. Testes offline não comprovam qualidade ou disponibilidade dos provedores;
-avaliações reais seguem [evals](../evals/README.md).
+avaliações reais seguem [evals](validacao-manual.md).

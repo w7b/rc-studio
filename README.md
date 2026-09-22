@@ -25,7 +25,7 @@ SG Sistemas tem contratos preparados e aguarda homologação.
 
 Requisitos: Docker com containers Linux e Compose 2.24.4+, ou Python 3.11+ e Node.js 22
 para desenvolvimento local. Comandos abaixo usam PowerShell na raiz do repositório.
-Instalações legadas devem seguir a [migração de dados](docs/como-rodar.md#migrar-o-diretório-legado) antes de usar o novo layout.
+Instalações legadas devem seguir a [migração de dados](docs/operacao.md#migrar-o-diretório-legado) antes de usar o novo layout.
 
 ```powershell
 New-Item -ItemType Directory -Force data/platform | Out-Null
@@ -35,7 +35,7 @@ if (-not (Test-Path data/platform/.env)) {
 docker compose --profile shared up --build -d
 ```
 
-Abra [o Studio](http://127.0.0.1:8765) e siga o [primeiro acesso OWNER](docs/nginx.md#primeiro-acesso-e-menus-ausentes).
+Abra [o Studio](http://127.0.0.1:8765) e siga o [primeiro acesso OWNER](docs/operacao.md#primeiro-acesso-e-menus-ausentes).
 O perfil `shared` inicia o worker que consome a fila; sem ele, campanhas compartilhadas
 ficam aguardando. Credenciais de modelos ficam no backend, conforme `.env.example`.
 
@@ -68,9 +68,9 @@ testes Python com PostgreSQL e smoke da imagem/NGINX em jobs separados. Não pre
 chaves de IA. O check agregado `test` só passa quando todos passam.
 
 Mudanças visuais são conferidas manualmente em desktop e celular. Use o
-[guia de validação](docs/architecture/validation.md) para comandos e checklist.
+[guia de validação](docs/arquitetura.md) para comandos e checklist.
 Preserve testes de regras, segurança e contratos; ajustes cosméticos não precisam
-de novos arquivos de teste. Qualidade editorial com modelos reais segue [evals/README.md](evals/README.md).
+de novos arquivos de teste. Qualidade editorial com modelos reais segue [evals/README.md](docs/validacao-manual.md).
 
 Após revisar o diff e os dados incluídos, envie uma branch ao remoto e abra um pull
 request. Aguarde os checks antes de integrar. O workflow valida o projeto; não faz
@@ -90,15 +90,25 @@ Markdown em `resources/` e nos Brand Kits é entrada da aplicação, não docume
 descartável. Dados, `.env`, `.model-keys/`, dependências e builds não devem ir ao Git.
 O clone não substitui backup de banco e arquivos; preserve caminhos relativos e IDs de mídia.
 
+## Estrutura
+
+- `apps/backend/` — pacote `realcenter_marketing`: domínio, aplicação, infraestrutura,
+  apresentação e bootstrap. Instale da raiz com `python -m pip install -e './apps/backend[dev]'`.
+- `apps/frontend/` — React com Vite e Tailwind. `src/app` compõe a interface,
+  `src/features` organiza funcionalidades e `src/shared` guarda cliente HTTP e componentes.
+- `resources/` — prompts dos agentes, política, Brand Kit base e claims. É código.
+- `data/` — lojas e segredos da plataforma, fora do Git.
+
 ## Documentação
 
-- [Como rodar, ambientes, migrações e backup](docs/como-rodar.md)
-- [NGINX, primeiro acesso e HTTPS](docs/nginx.md)
-- [Administração, login, módulos e credenciais](docs/admin-and-auth.md)
-- [Arquitetura e decisões](docs/architecture/blueprint.md)
-- [Validação automática e revisão manual](docs/architecture/validation.md)
-- [Consultoria e contratos de campanha](docs/marketing-consultations.md)
-- [Edição de referências e Qwen](docs/reference-editor.md)
-- [Nemotron](docs/nemotron.md) e [escopo SGCloud](docs/integrations/sgcloud/README.md)
-- [Próximas entregas e decisões de Brand Kit](ROADMAP.md)
-- [Design](DESIGN.md) e [comportamentos de interface](UX-CONTRACT.md)
+- [Operação](docs/operacao.md) — rodar, ambientes, migrações, backup, NGINX, HTTPS,
+  primeiro acesso, login, módulos e credenciais
+- [Arquitetura](docs/arquitetura.md) — camadas, contratos, decisões e checks automáticos
+- [Validação manual](docs/validacao-manual.md) — o que conferir à mão com modelo real
+- [Consultoria de marketing](docs/marketing-consultations.md) e
+  [edição de referências](docs/reference-editor.md)
+- [Escopo SGCloud](docs/integrations/sgcloud/README.md)
+- [Próximas entregas](ROADMAP.md), [design](DESIGN.md) e [contrato de interface](UX-CONTRACT.md)
+
+Para testar um modelo novo antes de oferecê-lo às lojas, use `scripts/probe_model.py`: ele
+roda o pipeline real contra o modelo e diz em qual etapa o schema falhou.

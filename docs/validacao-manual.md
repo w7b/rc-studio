@@ -1,4 +1,4 @@
-# Avaliação editorial manual
+# Validação manual
 
 Executar com modelo real após configurar .env. Os testes offline validam integração, não qualidade do modelo.
 
