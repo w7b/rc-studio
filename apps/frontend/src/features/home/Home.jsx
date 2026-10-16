@@ -1,27 +1,24 @@
 import React, { useEffect } from 'react';
 import {
+  ArrowDown,
   ArrowUpRight,
-  Clock,
   Images,
   LineChart,
-  MessageCircle,
   MessagesSquare,
   PenLine,
   ShieldCheck,
   Sparkles,
   Store,
-  Calendar,
-} from 'lucide-react';
+} from '../../shared/icons.js';
 import PublicHeader from '../../shared/components/PublicHeader.jsx';
 import WhatsAppButton from '../../shared/components/WhatsAppButton.jsx';
 import RotatingText from '../../shared/components/RotatingText.jsx';
-import SpotlightCard from '../../shared/components/SpotlightCard.jsx';
+import HeroScene3D from './HeroScene3D.jsx';
 import {
   FEATURED_STORE_CATEGORIES,
   STORE_CATEGORIES,
 } from '../../shared/catalog/storeCategories.js';
-import ParticleField from './ParticleField.jsx';
-import { useCountUp, useReveal } from './useMotion.js';
+import useHomeMotion from './useHomeMotion.js';
 import arte1 from '../../assets/showcase/arte-1.webp';
 import arte2 from '../../assets/showcase/arte-2.webp';
 import arte3 from '../../assets/showcase/arte-3.webp';
@@ -58,7 +55,7 @@ const SHOWCASE = [
     src: arte2,
     width: 1254,
     height: 1254,
-    alt: 'Arte de destaque de macarrão instantâneo',
+    alt: 'Arte de promoção de Suco Garoto 2L',
     tag: 'Destaque',
   },
 ];
@@ -74,7 +71,7 @@ const CLIENTS = [
       { ...SHOWCASE[0], alt: 'Campanha de lançamento do suco Prats PRO+', tag: 'Lançamento' },
       { ...SHOWCASE[1], alt: 'Campanha de promoção de chaleira elétrica' },
       { ...SHOWCASE[2], alt: 'Comunicado de vaga de zeladora' },
-      { ...SHOWCASE[3], alt: 'Destaque de Cup Noodles' },
+      { ...SHOWCASE[3], alt: 'Promoção de Suco Garoto 2L' },
     ],
   },
 ];
@@ -120,51 +117,22 @@ const GUARANTEES = [
   },
 ];
 
-function Stat({ value, suffix = '', label, icon: Icon, delay }) {
-  const [ref, shown] = useReveal();
-  const counted = useCountUp(value, shown);
+function Section({ className = '', children, ...props }) {
   return (
-    <SpotlightCard
-      as="div"
-      ref={ref}
-      className={shown ? 'home-stat is-shown' : 'home-stat'}
-      style={{ '--delay': `${delay}ms` }}
-    >
-      <strong>
-        {counted}
-        {suffix}
-      </strong>
-      <span className="title-with-icon">
-        <Icon size={17} aria-hidden="true" />
-        {label}
-      </span>
-    </SpotlightCard>
-  );
-}
-
-function Section({ className = '', children, ...rest }) {
-  const [ref, shown] = useReveal();
-  const anchored = rest.id && window.location.hash === `#${rest.id}`;
-  return (
-    <section
-      ref={ref}
-      className={`home-section reveal ${shown || anchored ? 'is-shown' : ''} ${className}`}
-      {...rest}
-    >
+    <section className={`home-section ${className}`} {...props}>
       {children}
     </section>
   );
 }
 
 export default function Home({ signedIn = false }) {
+  const scope = useHomeMotion();
   useEffect(() => {
     const section = window.location.hash.slice(1);
     if (!['clientes', 'como-funciona'].includes(section)) return;
     const frame = requestAnimationFrame(() => {
       document.getElementById(section)?.scrollIntoView({
-        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-          ? 'instant'
-          : 'smooth',
+        behavior: 'instant',
         block: 'start',
       });
     });
@@ -173,172 +141,223 @@ export default function Home({ signedIn = false }) {
   return (
     <>
       <PublicHeader signedIn={signedIn} />
-
-      <main className="home">
-        <div className="home-hero">
-          <ParticleField />
-          <div className="home-hero-text">
-            <p className="eyebrow home-fade" style={{ '--delay': '0ms' }}>
-              CAMPANHAS PARA O COMÉRCIO LOCAL
-            </p>
-            <h1 className="home-fade" style={{ '--delay': '80ms' }}>
+      <main id="main-content" ref={scope} className="home w-full overflow-x-clip">
+        <div className="mx-auto w-full max-w-(--home-max-width) px-(--home-gutter)">
+          <section className="home-hero" aria-label="Studio AI para o comércio local">
+            <HeroScene3D />
+            <h1 className="max-w-6xl text-balance">
               Campanhas para
               <RotatingText words={STORE_CATEGORIES} />
             </h1>
-            <p className="home-lead home-fade" style={{ '--delay': '170ms' }}>
-              Uma equipe de agentes de marketing que entende o seu ramo, respeita o seu Brand Kit e
-              entrega arte e legenda prontas para revisar. Você aprova, você publica.
-            </p>
-          </div>
-
-          <div className="home-strip" aria-label="Artes criadas pelo Studio">
-            {/* Duplicated once so the marquee can loop without a visible jump. */}
-            <div className="home-strip-track">
-              {[...SHOWCASE, ...SHOWCASE].map((item, index) => (
-                <figure className="home-art" key={`${item.tag}-${index}`}>
-                  <img
-                    src={item.src}
-                    width={item.width}
-                    height={item.height}
-                    alt={index < SHOWCASE.length ? item.alt : ''}
-                    aria-hidden={index >= SHOWCASE.length}
-                    decoding="async"
-                  />
+            <div className="mt-8 flex max-w-2xl flex-col items-start gap-6">
+              <p className="home-lead max-w-2xl">
+                Uma equipe de agentes de marketing que entende o seu ramo, respeita o seu Brand Kit
+                e entrega arte e legenda prontas para revisar. Você aprova, você publica.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <a className="button primary min-h-12" href={signedIn ? '/studio' : '/login'}>
+                  {signedIn ? 'Abrir Studio' : 'Entrar no Studio'}{' '}
+                  <ArrowUpRight size={18} aria-hidden="true" />
+                </a>
+                <a className="button min-h-12" href="#como-funciona">
+                  Como funciona <ArrowDown size={16} aria-hidden="true" />
+                </a>
+              </div>
+            </div>
+            <div
+              className="home-showcase mt-14 grid grid-flow-dense grid-cols-2 gap-3 md:grid-cols-4 md:gap-5"
+              aria-label="Artes criadas pelo Studio"
+              data-reveal-row
+            >
+              {SHOWCASE.map((item) => (
+                <figure className="home-art group" key={item.tag}>
+                  <div className="aspect-4/5 overflow-hidden rounded-lg border border-line bg-surface">
+                    <img
+                      className="h-full w-full object-contain transition-transform duration-700 ease-out motion-safe:group-hover:scale-105"
+                      src={item.src}
+                      width={item.width}
+                      height={item.height}
+                      alt={item.alt}
+                      decoding="async"
+                    />
+                  </div>
                   <figcaption>{item.tag}</figcaption>
                 </figure>
               ))}
             </div>
-          </div>
-        </div>
+            <dl
+              className="home-facts mt-12 grid grid-cols-1 border-y border-line sm:grid-cols-3"
+              data-reveal-row
+            >
+              <div>
+                <dt>Agentes por campanha</dt>
+                <dd className="home-fact-value">4</dd>
+                <dd className="home-fact-note">Estratégia, texto, direção de arte e revisão.</dd>
+              </div>
+              <div>
+                <dt>Categorias de negócios</dt>
+                <dd className="home-fact-value">{STORE_CATEGORIES.length}</dd>
+                <dd className="home-fact-note">Regras e linguagem adaptadas a cada segmento.</dd>
+              </div>
+              <div>
+                <dt>Formatos de publicação</dt>
+                <dd className="home-fact-value">6</dd>
+                <dd className="home-fact-note">Peças preparadas para os principais canais.</dd>
+              </div>
+            </dl>
+          </section>
 
-        <div className="home-stats">
-          <Stat value={4} label="agentes por campanha" icon={Sparkles} delay={0} />
-          <Stat
-            value={STORE_CATEGORIES.length}
-            label="categorias de negócios"
-            icon={Store}
-            delay={90}
-          />
-          <Stat value={6} label="formatos de publicação" icon={Images} delay={180} />
-          <Stat value={5} suffix=" min" label="do briefing ao rascunho" icon={Clock} delay={270} />
-        </div>
-
-        <Section id="clientes" aria-label="Clientes atendidos" className="home-clients">
-          <p className="eyebrow">CLIENTES ATENDIDOS</p>
-          <h2>Quem já publica com o Studio</h2>
-          <p className="home-lead">Peças reais, aprovadas pela loja e publicadas no perfil dela.</p>
-
-          {CLIENTS.map((client) => (
-            <SpotlightCard className="client-card" key={client.name}>
-              <header>
-                <div className="client-logo">
-                  <img
-                    src={client.logo}
-                    width={320}
-                    height={426}
-                    alt={`Logo ${client.name}`}
-                    decoding="async"
-                  />
-                </div>
-                <div className="client-id">
-                  <h3>{client.name}</h3>
-                  <p className="client-segment">{client.segment}</p>
-                  <p className="client-note">{client.note}</p>
-                  <span className="client-since">{client.since}</span>
-                </div>
-              </header>
-              <ul className="client-work">
-                {client.work.map((piece) => (
-                  <li key={piece.alt}>
-                    <figure>
-                      <img
-                        src={piece.src}
-                        width={piece.width}
-                        height={piece.height}
-                        alt={piece.alt}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                      <figcaption>{piece.tag}</figcaption>
-                    </figure>
-                  </li>
-                ))}
-              </ul>
-            </SpotlightCard>
-          ))}
-        </Section>
-
-        <Section id="como-funciona" aria-label="Como funciona">
-          <h2>Como funciona</h2>
-          <p className="home-lead">Três passos. O trabalho pesado fica com os agentes.</p>
-          <div className="home-grid home-steps">
-            {STEPS.map(({ icon: Icon, title, body }, index) => (
-              <SpotlightCard
-                className="home-card"
-                key={title}
-                style={{ '--delay': `${index * 110}ms` }}
-              >
-                <span className="home-step-number">{String(index + 1).padStart(2, '0')}</span>
-                <h3 className="title-with-icon">
-                  <Icon size={20} aria-hidden="true" />
-                  {title}
-                </h3>
-                <p>{body}</p>
-              </SpotlightCard>
+          <Section id="clientes" aria-labelledby="clients-heading">
+            <div className="mb-10 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+              <h2 id="clients-heading" className="max-w-xl">
+                Quem já publica
+                <br />
+                com o Studio
+              </h2>
+              <p className="home-lead max-w-sm">
+                Peças reais, aprovadas pela loja e publicadas no perfil dela.
+              </p>
+            </div>
+            {CLIENTS.map((client) => (
+              <article className="client-card" key={client.name}>
+                <header className="flex flex-wrap items-center gap-5 border-b border-line pb-7">
+                  <div className="client-logo">
+                    <img
+                      src={client.logo}
+                      width={320}
+                      height={426}
+                      alt={`Logo ${client.name}`}
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-2xl font-semibold">{client.name}</h3>
+                    <p className="mt-1 text-sm text-muted">{client.segment}</p>
+                  </div>
+                  <p className="text-sm text-muted">{client.since}</p>
+                </header>
+                <p className="my-7 max-w-2xl text-muted">{client.note}</p>
+                <ul
+                  className="grid grid-flow-dense grid-cols-2 gap-3 md:grid-cols-4 md:gap-5"
+                  data-reveal-row
+                >
+                  {client.work.map((piece) => (
+                    <li key={piece.alt}>
+                      <figure className="home-art group">
+                        <div className="aspect-4/5 overflow-hidden rounded-lg border border-line bg-surface">
+                          <img
+                            className="h-full w-full object-contain transition-transform duration-700 ease-out motion-safe:group-hover:scale-105"
+                            src={piece.src}
+                            width={piece.width}
+                            height={piece.height}
+                            alt={piece.alt}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </div>
+                        <figcaption>{piece.tag}</figcaption>
+                      </figure>
+                    </li>
+                  ))}
+                </ul>
+              </article>
             ))}
-          </div>
-        </Section>
+          </Section>
 
-        <Section aria-label="Para quem é">
-          <h2>Feito para qualquer segmento</h2>
-          <p className="home-lead">
-            As regras mudam conforme o ramo. Uma farmácia não pode prometer resultado, uma academia
-            não vende por quilo e uma loja de roupa não tem encarte. Aplicamos as regras certas para
-            cada tipo de loja.
-          </p>
-          <ul className="home-tags">
-            {FEATURED_STORE_CATEGORIES.map((segment, index) => (
-              <li key={segment} style={{ '--delay': `${index * 45}ms` }}>
-                <Store size={13} aria-hidden="true" /> {segment}
-              </li>
-            ))}
-            <li className="home-tag-more">
-              <Sparkles size={13} aria-hidden="true" /> Muito Mais
-            </li>
-          </ul>
-        </Section>
+          <Section id="como-funciona" aria-labelledby="process-heading" className="home-process">
+            <div className="home-section-header">
+              <h2 id="process-heading">
+                Da ideia
+                <br />
+                ao rascunho.
+              </h2>
+              <p className="home-lead mt-5 max-w-sm">
+                Três passos. O trabalho pesado fica com os agentes.
+              </p>
+            </div>
+            <div className="home-steps mt-12 grid gap-4 md:grid-cols-3" data-reveal-row>
+              {STEPS.map(({ icon: Icon, title, body }, index) => (
+                <article
+                  className="home-step rounded-lg border border-line bg-surface p-7 md:p-8"
+                  key={title}
+                >
+                  <div className="mb-12 flex items-center justify-between text-muted">
+                    <span className="text-sm">Passo {index + 1}</span>
+                    <Icon size={24} aria-hidden="true" />
+                  </div>
+                  <h3 className="mb-4 text-xl font-medium">{title}</h3>
+                  <p className="max-w-lg leading-relaxed text-muted">{body}</p>
+                </article>
+              ))}
+            </div>
+          </Section>
 
-        <Section aria-label="Garantias">
-          <h2>O que você pode contar</h2>
-          <div className="home-grid home-guarantees">
-            {GUARANTEES.map(({ icon: Icon, title, body }, index) => (
-              <SpotlightCard
-                className="home-card"
-                key={title}
-                style={{ '--delay': `${index * 90}ms` }}
-              >
-                {/* Icon on the title's own line: stacked above it read as a stray mark
-                    with nothing tying it to the text. */}
-                <h3>
-                  <Icon size={18} aria-hidden="true" />
-                  {title}
-                </h3>
-                <p>{body}</p>
-              </SpotlightCard>
-            ))}
-          </div>
-        </Section>
+          <Section aria-labelledby="segments-heading" className="home-segments">
+            <div className="home-section-header">
+              <h2 id="segments-heading">
+                Feito para
+                <br />o seu segmento.
+              </h2>
+              <p className="home-lead max-w-2xl">
+                As regras mudam conforme o ramo. Uma farmácia não pode prometer resultado, uma
+                academia não vende por quilo e uma loja de roupa não tem encarte. Aplicamos as
+                regras certas para cada tipo de loja.
+              </p>
+            </div>
+            <ul
+              className="home-categories mt-12 grid grid-cols-2 content-start gap-x-6 md:grid-cols-4 md:gap-x-8"
+              data-reveal-row
+            >
+              {FEATURED_STORE_CATEGORIES.map((segment) => (
+                <li key={segment}>{segment}</li>
+              ))}
+              <li className="col-span-2 text-muted md:col-span-4">E muitos outros segmentos.</li>
+            </ul>
+          </Section>
 
-        <div className="home-actions home-contact">
-          <WhatsAppButton>Entre em contato</WhatsAppButton>
+          <Section aria-labelledby="guarantees-heading">
+            <h2 id="guarantees-heading" className="mb-10" data-reveal-heading>
+              O que você pode contar
+            </h2>
+            <div
+              className="grid grid-flow-dense grid-cols-1 gap-x-8 md:grid-cols-2 lg:grid-cols-4"
+              data-reveal-row
+            >
+              {GUARANTEES.map(({ icon: Icon, title, body }) => (
+                <article className="border-t border-line py-8" key={title}>
+                  <div className="mb-4 flex items-center gap-3">
+                    <Icon size={22} className="shrink-0 text-muted" aria-hidden="true" />
+                    <h3 className="text-lg font-medium">{title}</h3>
+                  </div>
+                  <p className="max-w-xl leading-relaxed text-muted">{body}</p>
+                </article>
+              ))}
+            </div>
+          </Section>
+
+          <Section
+            className="home-contact border-t border-line pt-14"
+            aria-labelledby="contact-heading"
+          >
+            <div className="flex flex-col items-start justify-between gap-8 md:flex-row md:items-end">
+              <h2 id="contact-heading" className="max-w-2xl">
+                Vamos criar a próxima
+                <br />
+                campanha da sua loja?
+              </h2>
+              <WhatsAppButton>Entre em contato</WhatsAppButton>
+            </div>
+          </Section>
+          <footer className="home-footer flex flex-col items-start justify-between gap-4 border-t border-line py-8 md:flex-row md:items-center">
+            <span className="home-mark">
+              Studio<strong>AI</strong>
+            </span>
+            <p className="text-sm text-muted">
+              Rascunhos para revisão humana · o Studio nunca publica sozinho
+            </p>
+          </footer>
         </div>
-
-        <footer className="home-footer">
-          <span className="home-mark">
-            Studio<strong>AI</strong>
-          </span>
-          <p>Rascunhos para revisão humana · o Studio nunca publica sozinho</p>
-        </footer>
       </main>
     </>
   );

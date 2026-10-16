@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { UploadCloud, X } from 'lucide-react';
+import React, { useEffect, useId, useState } from 'react';
+import { UploadCloud, X } from '../icons.js';
 
 export default function UploadField({ label, file, onChange, optional = false }) {
   const [preview, setPreview] = useState('');
   const [error, setError] = useState('');
+  const errorId = useId();
   useEffect(() => {
     if (!file) {
       setPreview('');
@@ -36,12 +37,14 @@ export default function UploadField({ label, file, onChange, optional = false })
           choose(e.dataTransfer.files[0]);
         }}
       >
-        {preview ? <img src={preview} alt={label} /> : <UploadCloud size={24} />}
+        {preview ? <img src={preview} alt={label} /> : <UploadCloud size={24} aria-hidden="true" />}
         <div>
           <strong>{file ? file.name : 'Clique ou arraste uma imagem'}</strong>
           <span>PNG ou JPEG · até 8 MB</span>
           <input
             aria-label={label}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             type="file"
             accept="image/png,image/jpeg"
             className="upload-input"
@@ -56,14 +59,17 @@ export default function UploadField({ label, file, onChange, optional = false })
             type="button"
             className="icon-button"
             aria-label={'Remover ' + label}
-            onClick={() => onChange(null)}
+            onClick={() => {
+              setError('');
+              onChange(null);
+            }}
           >
-            <X size={16} />
+            <X size={16} aria-hidden="true" />
           </button>
         )}
       </div>
       {error && (
-        <p role="alert" className="text-red-700 text-sm mt-2">
+        <p id={errorId} role="alert" className="text-red-700 text-sm mt-2">
           {error}
         </p>
       )}

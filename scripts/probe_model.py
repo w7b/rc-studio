@@ -20,12 +20,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'apps/backend/src'))
 
-from realcenter_marketing.bootstrap.paths import AppPaths  # noqa: E402
-from realcenter_marketing.bootstrap.model_catalog import resolve_text, text_models  # noqa: E402
-from realcenter_marketing.bootstrap.settings import Settings  # noqa: E402
-from realcenter_marketing.domain.campaigns import CampaignBrief  # noqa: E402
-from realcenter_marketing.infrastructure.agents_sdk.runtime import execute_campaign  # noqa: E402
-from realcenter_marketing.infrastructure.observability.journal import RunJournal  # noqa: E402
+from studio_ai.bootstrap.paths import AppPaths  # noqa: E402
+from studio_ai.bootstrap.model_catalog import resolve_text, text_models  # noqa: E402
+from studio_ai.bootstrap.settings import Settings  # noqa: E402
+from studio_ai.domain.campaigns import CampaignBrief  # noqa: E402
+from studio_ai.infrastructure.agents_sdk.runtime import execute_campaign  # noqa: E402
+from studio_ai.infrastructure.observability.journal import RunJournal  # noqa: E402
 
 BRIEF = ('Campanha institucional de final de semana para uma loja de bairro. '
          'Sem ofertas, sem precos e sem datas: o objetivo e lembranca de marca.')

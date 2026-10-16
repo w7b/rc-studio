@@ -1,16 +1,20 @@
 {
-  "name": "realcenter-studio",
+  "name": "studio-ai",
   "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "test": "node --test tests/*.test.js",
     "format": "prettier --write \"src/**/*.{js,jsx,css}\" index.html",
     "format:check": "prettier --check \"src/**/*.{js,jsx,css}\" index.html"
   },
   "dependencies": {
-    "lucide-react": "^0.468.0",
+    "@fontsource-variable/outfit": "^5.3.0",
+    "@gsap/react": "^2.1.2",
+    "@phosphor-icons/react": "^2.1.10",
+    "gsap": "^3.15.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

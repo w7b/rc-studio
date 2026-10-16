@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { KeyRound } from 'lucide-react';
+import { KeyRound } from '../../shared/icons.js';
+import { sessionService } from '../../services/session.js';
 
 const LABELS = { google: 'Google', microsoft: 'Microsoft', auth0: 'conta corporativa' };
 
@@ -20,7 +21,7 @@ export default function OAuthProviders({ providers = [], disabled = false }) {
           aria-busy={pending === provider}
           onClick={() => {
             setPending(provider);
-            window.location.assign(`/api/auth/${provider}`);
+            window.location.assign(sessionService.providerUrl(provider));
           }}
         >
           <KeyRound size={16} aria-hidden="true" />

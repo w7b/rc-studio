@@ -1,15 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Crop, Eraser, SlidersHorizontal, Sparkles, LoaderCircle } from 'lucide-react';
+import { Crop, Eraser, SlidersHorizontal, Sparkles, LoaderCircle } from '../../shared/icons.js';
 import Form from '../../shared/components/Form.jsx';
 import Textarea from '../../shared/components/Textarea.jsx';
-import { api, post } from '../../shared/api/client.js';
-import './reference-editor.css';
+import { referenceService } from '../../services/references.js';
 
 const operations = [
   ['crop', 'Recortar', Crop],
   ['remove_background', 'Remover fundo', Eraser],
   ['enhance', 'Nitidez e tamanho', SlidersHorizontal],
-  ['qwen', 'Editar com Qwen', Sparkles],
+  ['qwen', 'Editar com Qwen-Image-Edit', Sparkles],
 ];
 
 export default function ReferenceEditor({
@@ -39,7 +38,8 @@ export default function ReferenceEditor({
     let alive = true;
     setAvailable(false);
     if (connected)
-      api('/api/references/editor-options')
+      referenceService
+        .getEditorOptions()
         .then((data) => {
           if (alive) setAvailable(data.qwen_available === true);
         })
@@ -78,8 +78,7 @@ export default function ReferenceEditor({
     setError('');
     setResult(null);
     try {
-      const saved = await post(
-        '/api/references/edit',
+      const saved = await referenceService.edit(
         {
           reference_id: item.id,
           operation,
@@ -116,7 +115,9 @@ export default function ReferenceEditor({
             Ajuste uma imagem e salve uma nova cópia. O original é preservado.
           </p>
         </div>
-        <span className="badge">Qwen · {available ? 'Configurado' : 'Não configurado'}</span>
+        <span className="badge">
+          Qwen-Image-Edit · {available ? 'Configurado' : 'Não configurado'}
+        </span>
       </header>
       <Form noValidate onSubmit={submit} aria-busy={saving}>
         <fieldset disabled={busy} className="reference-editor-fields">
@@ -157,7 +158,7 @@ export default function ReferenceEditor({
               </div>
               {!available && (
                 <p className="muted text-xs">
-                  A edição com Qwen requer conexão com o modelo no servidor.
+                  A edição com Qwen-Image-Edit requer conexão com o modelo no servidor.
                 </p>
               )}
               <div className="reference-editor-workspace">

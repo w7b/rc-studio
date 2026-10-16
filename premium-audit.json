@@ -1,23 +1,13 @@
 {
-  "findings": [
-    {
-      "category": "violation",
-      "file": "apps/frontend/src/features/config/BrandKitConfig.jsx",
-      "line": 133,
-      "message": "Literal product textarea does not show evidence of the canonical resize-none rule.",
-      "remediation": "Use the shared Textarea owner or apply resize-none/resize: none with adequate height or auto-grow behavior.",
-      "ruleId": "form.textarea-resize-missing",
-      "severity": "error"
-    }
-  ],
+  "findings": [],
   "mode": "strict",
   "projectRoot": "C:\\Users\\Gabriel\\Desktop\\create-rc-agents",
   "schemaVersion": 1,
   "summary": {
-    "errors": 1,
-    "total": 1,
+    "errors": 0,
+    "total": 0,
     "unresolved": 0,
-    "violations": 1,
+    "violations": 0,
     "warnings": 0
   }
 }

@@ -18,11 +18,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'apps/backend/src'))
 
-from realcenter_marketing.application.errors import BusyError  # noqa: E402
-from realcenter_marketing.bootstrap.platform import build_identity  # noqa: E402
-from realcenter_marketing.bootstrap.registry import TenantRegistry  # noqa: E402
-from realcenter_marketing.bootstrap.paths import AppPaths  # noqa: E402
-from realcenter_marketing.infrastructure.identity.jobs import PostgresJobQueue  # noqa: E402
+from studio_ai.application.errors import BusyError  # noqa: E402
+from studio_ai.bootstrap.platform import build_identity  # noqa: E402
+from studio_ai.bootstrap.registry import TenantRegistry  # noqa: E402
+from studio_ai.bootstrap.paths import AppPaths  # noqa: E402
+from studio_ai.infrastructure.identity.jobs import PostgresJobQueue  # noqa: E402
 
 IDLE_SECONDS = 2
 HEARTBEAT_SECONDS = 20

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { api } from '../../shared/api/client.js';
+import { systemService } from '../../services/system.js';
 
 export default function AgentUsage() {
   const [data, setData] = useState(null),
@@ -9,7 +9,7 @@ export default function AgentUsage() {
       timer;
     async function refresh() {
       try {
-        const value = await api('/api/usage');
+        const value = await systemService.getUsage();
         if (!stopped) {
           setData(value);
           setError('');
@@ -30,7 +30,6 @@ export default function AgentUsage() {
     <>
       <div className="page-title">
         <div>
-          <p className="eyebrow">OBSERVABILIDADE</p>
           <h1>Consumo dos agentes</h1>
           <p className="muted mt-3">
             Campanhas e consultas ao Creative Producer, por agente e modelo.

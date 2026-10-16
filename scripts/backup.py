@@ -17,8 +17,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'apps/backend/src'))
 
-from realcenter_marketing.bootstrap.paths import AppPaths  # noqa: E402
-from realcenter_marketing.infrastructure.identity.database import database_url  # noqa: E402
+from studio_ai.bootstrap.paths import AppPaths  # noqa: E402
+from studio_ai.infrastructure.identity.database import database_url  # noqa: E402
 
 KEEP_DAILY = 14
 

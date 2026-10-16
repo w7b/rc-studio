@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from realcenter_marketing.infrastructure.agents_sdk.demo import DemoModel
-from realcenter_marketing.bootstrap.settings import Settings
+from studio_ai.infrastructure.agents_sdk.demo import DemoModel
+from studio_ai.bootstrap.settings import Settings
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def root(tmp_path):
     (brand / 'references' / 'families.json').write_text(
         '{"files": {"fixture.png": "produto"}}', encoding='utf-8')
     import shutil
-    from realcenter_marketing.infrastructure.resources import resources_root, ROLE_FOLDERS
+    from studio_ai.infrastructure.resources import resources_root, ROLE_FOLDERS
     resources = resources_root()
     for role in ('marketing_director', 'social_media', 'copywriter', 'creative', 'performance', 'marketing_analyst'):
         shutil.copytree(resources / 'agents' / ROLE_FOLDERS.get(role, role), project / 'agents' / role)
@@ -37,7 +37,7 @@ def settings(root):
 
 @pytest.fixture
 def demo(root):
-    from realcenter_marketing.bootstrap.paths import AppPaths
+    from studio_ai.bootstrap.paths import AppPaths
     return DemoModel(AppPaths.discover(root).demo_responses)
 
 
@@ -46,7 +46,7 @@ def isolated_root(root, tmp_path):
     """A data root that carries its own agents, policy and demo fixtures, so an HTTP
     server can be built against it without touching the developer's own data."""
     import shutil
-    from realcenter_marketing.infrastructure.resources import resources_root, ROLE_FOLDERS
+    from studio_ai.infrastructure.resources import resources_root, ROLE_FOLDERS
     resources = resources_root()
     for role in ('marketing_director', 'social_media', 'copywriter', 'creative', 'performance', 'marketing_analyst'):
         shutil.copytree(resources / 'agents' / ROLE_FOLDERS.get(role, role), tmp_path / 'agents' / role)

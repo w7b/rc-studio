@@ -1,9 +1,9 @@
 import Textarea from '../../shared/components/Textarea.jsx';
 import Form from '../../shared/components/Form.jsx';
 import React, { useEffect, useRef, useState } from 'react';
-import { X, ImagePlus } from 'lucide-react';
+import { X, ImagePlus } from '../../shared/icons.js';
 import UploadField from '../../shared/components/UploadField.jsx';
-import { fileData } from '../../shared/api/client.js';
+import { fileData } from '../../services/files.js';
 
 export default function ImageRevision({ images, busy, onSubmit, onClose }) {
   const dialog = useRef(null),

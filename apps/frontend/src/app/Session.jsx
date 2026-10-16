@@ -1,13 +1,16 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { LoaderCircle } from 'lucide-react';
-import App from './App.jsx';
+import { LoaderCircle } from '../shared/icons.js';
 import Login from '../features/auth/Login.jsx';
 import Invite from '../features/auth/Invite.jsx';
-import Home from '../features/home/Home.jsx';
-import { api, onSessionLost, post, setCsrf } from '../shared/api/client.js';
+import { sessionService, onSessionLost, setCsrf } from '../services/session.js';
 import { useRoute } from '../shared/hooks/useRoute.js';
 import { applyBrandTheme } from '../shared/brand/applyTheme.js';
 import { routeRedirect } from '../shared/navigation/routes.js';
+
+// Public visitors do not download the operational workspace; workspace routes do
+// not download the public GSAP choreography until the Home is opened.
+const App = React.lazy(() => import('./App.jsx'));
+const Home = React.lazy(() => import('../features/home/Home.jsx'));
 
 // Two deployments share this shell. Standalone has no database and no login, exactly as
 // the studio has always run locally; shared requires a session. /api/config says which,
@@ -18,12 +21,12 @@ export default function Session() {
 
   const load = useCallback(async () => {
     try {
-      const config = await api('/api/config');
+      const config = await sessionService.getConfig();
       if (!config.shared) {
         setCsrf(config.token);
         return setState({ status: 'standalone' });
       }
-      const session = await api('/api/session');
+      const session = await sessionService.getSession();
       if (!session.authenticated) {
         setCsrf('');
         applyBrandTheme(null);
@@ -63,7 +66,7 @@ export default function Session() {
 
   const signOut = useCallback(async () => {
     try {
-      await post('/api/logout', {});
+      await sessionService.signOut();
     } catch {
       // A failed logout still has to clear the client; the cookie may already be gone.
     }
@@ -102,6 +105,9 @@ export default function Session() {
         <div className="panel auth-card">
           <h1 className="auth-title">Studio indisponível</h1>
           <p className="auth-lead">Não foi possível falar com o servidor. Tente recarregar.</p>
+          <button type="button" className="button primary" onClick={load}>
+            Tentar novamente
+          </button>
         </div>
       </main>
     );

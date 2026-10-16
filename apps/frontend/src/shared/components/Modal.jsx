@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X } from 'lucide-react';
+import { X } from '../icons.js';
 
 // Native <dialog>: focus trapping, Escape and the backdrop come from the platform rather
 // than from hand-written key handlers that miss cases.
@@ -18,7 +18,7 @@ export default function Modal({ title, lead, onClose, children, busy = false }) 
     return () => {
       if (element?.open) element.close();
       document.body.style.overflow = overflow;
-      previous?.focus();
+      if (previous?.isConnected) previous.focus({ preventScroll: true });
     };
   }, []);
 
@@ -28,6 +28,7 @@ export default function Modal({ title, lead, onClose, children, busy = false }) 
       className="modal"
       aria-labelledby={titleId}
       aria-describedby={lead ? leadId : undefined}
+      aria-busy={busy || undefined}
       onKeyDown={(event) => {
         if (event.key === 'Escape') event.stopPropagation();
       }}
@@ -57,7 +58,7 @@ export default function Modal({ title, lead, onClose, children, busy = false }) 
             onClick={onClose}
             disabled={busy}
           >
-            <X size={16} />
+            <X size={16} aria-hidden="true" />
           </button>
         </header>
         {children}

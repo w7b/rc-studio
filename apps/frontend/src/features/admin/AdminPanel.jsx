@@ -9,8 +9,8 @@ import {
   UserPlus,
   SlidersHorizontal,
   KeyRound,
-} from 'lucide-react';
-import { api, post } from '../../shared/api/client.js';
+} from '../../shared/icons.js';
+import { adminService } from '../../services/admin.js';
 import ActionMenu from '../../shared/components/ActionMenu.jsx';
 import Modal from '../../shared/components/Modal.jsx';
 import CategoryField from '../../shared/components/CategoryField.jsx';
@@ -52,7 +52,7 @@ export default function AdminPanel({ onModulesChanged }) {
 
   const load = useCallback(async () => {
     try {
-      setData(await api('/api/admin/overview'));
+      setData(await adminService.getOverview());
       setError('');
     } catch (failure) {
       setError(failure.message);
@@ -63,12 +63,12 @@ export default function AdminPanel({ onModulesChanged }) {
     load();
   }, [load]);
 
-  async function act(path, payload, after) {
+  async function act(operation, payload, after) {
     if (busy) return;
     setBusy(true);
     setError('');
     try {
-      const result = await post(path, payload);
+      const result = await operation(payload);
       if (after) await after(result);
       await load();
       setNotice('Alteração salva.');
@@ -86,7 +86,7 @@ export default function AdminPanel({ onModulesChanged }) {
       document.getElementById(!form.name.trim() ? 'admin-name' : 'admin-slug')?.focus();
       return;
     }
-    await act('/api/admin/tenants', { ...form, root_path: form.root_path.trim() || null }, () => {
+    await act(adminService.createTenant, form, () => {
       setForm({
         slug: '',
         name: '',
@@ -140,7 +140,6 @@ export default function AdminPanel({ onModulesChanged }) {
     <>
       <div className="page-title">
         <div>
-          <p className="eyebrow">ADMINISTRAÇÃO</p>
           <h1>Administração</h1>
           <p className="muted mt-3">Acompanhe a plataforma e gerencie lojas, módulos e acessos.</p>
         </div>
@@ -421,7 +420,7 @@ export default function AdminPanel({ onModulesChanged }) {
                             ? 'As pessoas desta loja perderão o acesso até ela ser reativada.'
                             : 'As pessoas vinculadas voltarão a acessar esta loja.',
                         label: tenant.status === 'active' ? 'Suspender loja' : 'Reativar loja',
-                        path: '/api/admin/tenants/status',
+                        operation: adminService.setTenantStatus,
                         payload: {
                           tenant_id: tenant.id,
                           status: tenant.status === 'active' ? 'suspended' : 'active',
@@ -484,7 +483,7 @@ export default function AdminPanel({ onModulesChanged }) {
           error={error}
           onClose={() => setInviting(null)}
           onCreate={(email, role) =>
-            act('/api/admin/invites', { tenant_id: inviting.id, email, role }, (result) => {
+            act(adminService.createInvite, { tenant_id: inviting.id, email, role }, (result) => {
               setInvite({ link: result.link, store: inviting.name, email });
               setCopied(false);
               setInviting(null);
@@ -499,8 +498,8 @@ export default function AdminPanel({ onModulesChanged }) {
           busy={busy}
           error={error}
           onClose={() => setAccessStore(null)}
-          onChange={(path, payload, after) =>
-            act(path, payload, async () => {
+          onChange={(operation, payload, after) =>
+            act(operation, payload, async () => {
               after();
               await onModulesChanged?.();
             })
@@ -515,7 +514,7 @@ export default function AdminPanel({ onModulesChanged }) {
           onClose={() => setKeyStore(null)}
           onSave={(changes, after) =>
             act(
-              '/api/admin/tenants/model-keys',
+              adminService.saveModelKeys,
               { tenant_id: selectedKeyStore.id, changes },
               async (result) => {
                 after(result);
@@ -534,16 +533,14 @@ export default function AdminPanel({ onModulesChanged }) {
           onClose={() => setModuleStore(null)}
           onToggle={(module, enabled) =>
             act(
-              '/api/admin/tenants/modules',
+              adminService.setModule,
               { tenant_id: selectedStore.id, module, enabled },
               async () => {
                 await onModulesChanged?.();
               }
             )
           }
-          onValidate={() =>
-            act('/api/admin/tenants/meta-ads/validate', { tenant_id: selectedStore.id })
-          }
+          onValidate={() => act(adminService.validateMetaAds, { tenant_id: selectedStore.id })}
         />
       )}
       {confirmation && (
@@ -571,7 +568,7 @@ export default function AdminPanel({ onModulesChanged }) {
               className="button action-danger"
               disabled={busy}
               onClick={() =>
-                act(confirmation.path, confirmation.payload, () => {
+                act(confirmation.operation, confirmation.payload, () => {
                   setConfirmation(null);
                   onModulesChanged?.();
                 })

@@ -24,7 +24,7 @@ RUN pip install --no-cache-dir ./apps/backend && useradd --create-home studio &&
 USER studio
 EXPOSE 8765
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/config', timeout=3)" || exit 1
-CMD ["python", "-m", "realcenter_marketing", "--host", "0.0.0.0"]
+CMD ["python", "-m", "studio_ai", "--host", "0.0.0.0"]
 
 # Development image. The production stage installs the package normally, so the code runs
 # from site-packages and syncing apps/backend/src into the container would change nothing.

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search } from '../../shared/icons.js';
 import Modal from '../../shared/components/Modal.jsx';
 import { STORE_CATEGORIES } from '../../shared/catalog/storeCategories.js';
 

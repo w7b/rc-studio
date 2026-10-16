@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { KeyRound, LoaderCircle } from 'lucide-react';
-import { api } from '../../shared/api/client.js';
+import { KeyRound, LoaderCircle } from '../../shared/icons.js';
+import { adminService } from '../../services/admin.js';
 import Modal from '../../shared/components/Modal.jsx';
 import Form from '../../shared/components/Form.jsx';
 import PasswordInput from '../../shared/components/PasswordInput.jsx';
@@ -15,7 +15,8 @@ export default function StoreModelKeys({ tenant, busy, error, onSave, onClose })
   useEffect(() => {
     let cancelled = false;
     setFailure('');
-    api(`/api/admin/tenants/model-keys?tenant_id=${tenant.id}`)
+    adminService
+      .getModelKeys(tenant.id)
       .then((value) => {
         if (!cancelled) setState(value);
       })

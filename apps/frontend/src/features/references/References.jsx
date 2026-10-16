@@ -1,7 +1,8 @@
 import Form from '../../shared/components/Form.jsx';
 import React, { useEffect, useState } from 'react';
-import { Download, Images, Link, LoaderCircle, ArrowRight } from 'lucide-react';
-import { api, post, fileData } from '../../shared/api/client.js';
+import { Download, Images, Link, LoaderCircle, ArrowRight } from '../../shared/icons.js';
+import { referenceService } from '../../services/references.js';
+import { fileData } from '../../services/files.js';
 import UploadField from '../../shared/components/UploadField.jsx';
 import ReferenceEditor from './ReferenceEditor.jsx';
 import DeleteImageButton from '../library/DeleteImageButton.jsx';
@@ -23,7 +24,8 @@ export default function References({ token, connected, onUse, onSaved }) {
     [busy, setBusy] = useState(false);
   useEffect(() => {
     let alive = true;
-    api('/api/references')
+    referenceService
+      .list()
       .then((data) => {
         if (alive) setItems(data);
       })
@@ -44,8 +46,7 @@ export default function References({ token, connected, onUse, onSaved }) {
     setError('');
     setMessage('');
     try {
-      const item = await post(
-        '/api/references',
+      const item = await referenceService.create(
         {
           kind,
           title,
@@ -113,7 +114,6 @@ export default function References({ token, connected, onUse, onSaved }) {
     <>
       <div className="page-title">
         <div>
-          <p className="eyebrow">SEU REPERTÓRIO CRIATIVO</p>
           <h1 id="references-heading" tabIndex={-1}>
             Referências
           </h1>
@@ -304,11 +304,7 @@ export default function References({ token, connected, onUse, onSaved }) {
                   >
                     Editar
                   </button>
-                  <a
-                    className="button small"
-                    href={'/api/references/' + item.id + '/download'}
-                    download
-                  >
+                  <a className="button small" href={referenceService.downloadUrl(item.id)} download>
                     <Download size={14} /> Baixar
                   </a>
                   <button

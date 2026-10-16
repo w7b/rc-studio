@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Copy, Download, ImagePlus, Image, CheckCircle, LoaderCircle } from 'lucide-react';
+import { Copy, Download, ImagePlus, Image, CheckCircle, LoaderCircle } from '../../shared/icons.js';
 import ImageRevision from '../image_revision/ImageRevision.jsx';
 import AgentTeam from '../agent_team/AgentTeam.jsx';
 import Diagnostics from './Diagnostics.jsx';
 import FieldHelp from '../../shared/components/FieldHelp.jsx';
 import CostSummary from './CostSummary.jsx';
+import { campaignService } from '../../services/campaigns.js';
 // Short, concrete explanations. A hint that restates the label teaches nothing, so each
 // one says what the field is for or what makes it right.
 const hints = {
@@ -139,7 +140,7 @@ export default function CampaignResults({ run, busy, onImage, connected }) {
     caption = outputs.copywriter?.feed_caption;
   const demo = run.events[0]?.mode === 'demo';
   const lastFailure = [...run.events].reverse().find((e) => e.message);
-  const file = (name) => `/api/runs/${run.id}/files/${name}`;
+  const file = (name) => campaignService.fileUrl(run.id, name);
   async function copy() {
     try {
       await navigator.clipboard.writeText(caption);
@@ -172,14 +173,14 @@ export default function CampaignResults({ run, busy, onImage, connected }) {
       )}
       <div className="flex flex-wrap justify-between gap-3 items-center">
         <div>
-          <p className="eyebrow">
-            {demo ? 'DEMONSTRAÇÃO · RESPOSTAS FIXAS' : 'CAMPANHA · RASCUNHO'}
-          </p>
-          <h2 className="mt-1">
+          <h2>
             {outputs.campaign?.director?.concept?.slice(0, 120) ||
               outputs.brief?.request?.slice(0, 100) ||
               'Campanha'}
           </h2>
+          <p className="muted mt-2 text-sm">
+            {demo ? 'Demonstração · respostas fixas' : 'Campanha · rascunho'}
+          </p>
         </div>
         {outputs.campaign && (
           <a className="button" href={file('campaign.json')} download>

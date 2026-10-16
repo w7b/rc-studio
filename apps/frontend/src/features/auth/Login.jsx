@@ -1,8 +1,7 @@
 import Form from '../../shared/components/Form.jsx';
-import SpotlightCard from '../../shared/components/SpotlightCard.jsx';
 import React, { useState } from 'react';
-import { LoaderCircle, LogIn } from 'lucide-react';
-import { post } from '../../shared/api/client.js';
+import { LoaderCircle, LogIn } from '../../shared/icons.js';
+import { sessionService } from '../../services/session.js';
 import PublicHeader from '../../shared/components/PublicHeader.jsx';
 import OAuthProviders from './OAuthProviders.jsx';
 import PasswordInput from '../../shared/components/PasswordInput.jsx';
@@ -31,7 +30,7 @@ export default function Login({ providers = [], onSignedIn }) {
     setBusy(true);
     setError('');
     try {
-      await post('/api/login', { email: email.trim(), password });
+      await sessionService.signIn({ email, password });
       await onSignedIn();
     } catch (failure) {
       setError(failure.message);
@@ -44,7 +43,7 @@ export default function Login({ providers = [], onSignedIn }) {
   return (
     <>
       <PublicHeader />
-      <main className="auth-shell public-auth">
+      <main id="main-content" className="auth-shell public-auth">
         <Form noValidate className="panel auth-card p-6" onSubmit={submit}>
           <h1 className="auth-title">Studio</h1>
           <p className="auth-lead">Entre para criar campanhas da sua loja.</p>
@@ -78,10 +77,10 @@ export default function Login({ providers = [], onSignedIn }) {
             </p>
           ) : null}
 
-          <SpotlightCard as="button" className="button primary" type="submit" disabled={busy}>
+          <button className="button primary" type="submit" disabled={busy}>
             {busy ? <LoaderCircle className="spin" size={16} /> : <LogIn size={16} />}
             Entrar
-          </SpotlightCard>
+          </button>
 
           <OAuthProviders providers={providers} disabled={busy} />
 

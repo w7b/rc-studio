@@ -7,7 +7,7 @@ which skip unless TEST_DATABASE_URL points at a real server.
 """
 import threading
 
-from realcenter_marketing.application.identity.model import Invite, Session, Tenant, User, now
+from studio_ai.application.identity.model import Invite, Session, Tenant, User, now
 
 
 class FakeIdentityStore:
@@ -50,7 +50,7 @@ class FakeIdentityStore:
                 for (user_id, holder), role in self.roles.items() if holder == tenant_id]
 
     def modules(self, tenant_id):
-        from realcenter_marketing.application.identity.modules import module_defaults
+        from studio_ai.application.identity.modules import module_defaults
         return module_defaults(self.module_settings.get(tenant_id))
 
     def set_module(self, tenant_id, module, enabled):
@@ -170,3 +170,24 @@ class FakeIdentityStore:
             self.invites[token_hash] = Invite(current.tenant_id, current.role, current.email,
                                               current.expires_at, now())
             return True
+
+
+class FastHasher:
+    """Hasher rápido para testes; conta as verificações falsas.
+
+    O scrypt de verdade é deliberadamente caro e as regras sob teste não precisam dele.
+    `dummies` existe para provar a defesa contra ataque de temporização: quando o e-mail
+    não existe, o serviço ainda gasta o tempo de uma verificação de senha.
+    """
+
+    def __init__(self):
+        self.dummies = 0
+
+    def hash(self, password):
+        return 'fake$' + password
+
+    def verify(self, password, encoded):
+        return encoded == 'fake$' + password
+
+    def dummy_verify(self):
+        self.dummies += 1

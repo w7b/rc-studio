@@ -14,7 +14,7 @@ import {
   Store,
   UserCog,
   ChevronRight,
-} from 'lucide-react';
+} from '../shared/icons.js';
 import { PAGE_MODULE, STUDIO_MENU, STUDIO_ROUTES } from '../shared/navigation/routes.js';
 import Tooltip from '../shared/components/Tooltip.jsx';
 
@@ -61,6 +61,7 @@ export default function StudioSidebar({
         className="wordmark"
         href={STUDIO_ROUTES.create}
         onClick={(event) => {
+          if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
           event.preventDefault();
           onNavigate('create');
         }}
@@ -69,7 +70,6 @@ export default function StudioSidebar({
           Studio<strong>AI</strong>
         </span>
       </a>
-      <div className="workspace-label">WORKSPACE DE MARKETING</div>
       <nav aria-label="Módulos do Studio">
         {visible
           .filter(({ under }) => !under || groups.includes(under))
@@ -114,13 +114,13 @@ export default function StudioSidebar({
           })}
       </nav>
       <div className="sidebar-account">
-        <div className="sidebar-bottom">
-          <span className={`connection-dot ${connected ? 'online' : ''}`} />
-          {connected ? 'Ambiente local conectado' : 'Conectando ao ambiente…'}
+        <div className="sidebar-bottom" role="status">
+          <span className={`connection-dot ${connected ? 'online' : ''}`} aria-hidden="true" />
+          {connected ? 'Conectado ao servidor' : 'Conectando ao servidor…'}
         </div>
         {session && onSignedOut && (
           <button className="logout-button" type="button" onClick={onSignedOut}>
-            <LogOut size={16} />
+            <LogOut size={16} aria-hidden="true" />
             Sair da conta
           </button>
         )}

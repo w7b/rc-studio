@@ -1,5 +1,5 @@
 import React from 'react';
-import { CheckCircle2, CircleHelp, TriangleAlert } from 'lucide-react';
+import { CheckCircle2, CircleHelp, TriangleAlert } from '../icons.js';
 
 export default function IntegrationStatus({ validation }) {
   const connected = validation?.status === 'connected';

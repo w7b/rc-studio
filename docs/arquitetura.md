@@ -12,7 +12,7 @@ continua disponível sem banco ou login, com uma raiz de dados local.
 
 ### Fronteiras
 
-| Camada em `apps/backend/src/realcenter_marketing/` | Responsabilidade |
+| Camada em `apps/backend/src/studio_ai/` | Responsabilidade |
 | --- | --- |
 | `domain/` | Modelos e invariantes; não importa HTTP, SDK ou persistência |
 | `application/` | Casos de uso e portas, sem I/O direto ou controle de threads |

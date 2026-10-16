@@ -1,6 +1,5 @@
 import React from 'react';
-import { ArrowUpRight } from 'lucide-react';
-import SpotlightCard from './SpotlightCard.jsx';
+import { ArrowUpRight } from '../icons.js';
 
 export function WhatsAppIcon({ size = 18, ...props }) {
   return (
@@ -23,8 +22,7 @@ export default function WhatsAppButton({
   href = 'https://wa.me/5544998360522',
 }) {
   return (
-    <SpotlightCard
-      as="a"
+    <a
       className={`button whatsapp-button ${className}`}
       href={href}
       target="_blank"
@@ -33,6 +31,6 @@ export default function WhatsAppButton({
       <WhatsAppIcon />
       {children}
       <ArrowUpRight size={14} aria-hidden="true" />
-    </SpotlightCard>
+    </a>
   );
 }

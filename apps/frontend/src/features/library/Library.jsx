@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Download, ArrowRight, Images } from 'lucide-react';
+import { Download, ArrowRight, Images } from '../../shared/icons.js';
 import DeleteImageButton from './DeleteImageButton.jsx';
 import Feedback from '../../shared/components/Feedback.jsx';
 
@@ -107,9 +107,8 @@ export default function Library({
     <>
       <div className="page-title">
         <div>
-          <p className="eyebrow">ACERVO {brandName.toUpperCase()}</p>
           <h1>Biblioteca</h1>
-          <p className="muted mt-3">Produtos do Brand Kit e artes das campanhas da sua loja.</p>
+          <p className="muted mt-3">Produtos do Brand Kit e artes das campanhas de {brandName}.</p>
         </div>
       </div>
       <div className="library-filters">

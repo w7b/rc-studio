@@ -3,21 +3,22 @@ import Form from '../../shared/components/Form.jsx';
 import React, { useState, useEffect } from 'react';
 import {
   ArrowRight,
-  Sparkles,
   ImagePlus,
   FlaskConical,
   ChevronDown,
   SlidersHorizontal,
   Plus,
-} from 'lucide-react';
+} from '../../shared/icons.js';
 import BriefAssistant from '../briefing/BriefAssistant.jsx';
 import UploadField from '../../shared/components/UploadField.jsx';
 import SearchSelect from '../../shared/components/SearchSelect.jsx';
 import CampaignMediaSource from './CampaignMediaSource.jsx';
-import { fileData, api, post } from '../../shared/api/client.js';
+import { fileData } from '../../services/files.js';
+import { campaignService } from '../../services/campaigns.js';
+import { referenceService } from '../../services/references.js';
 import Required from '../../shared/components/Required.jsx';
 import { buildRunRequest } from './run-request.js';
-import './campaign-form.css';
+import { groupByProvider } from '../../shared/catalog/models.js';
 
 export default function CampaignForm({
   products = [],
@@ -36,7 +37,8 @@ export default function CampaignForm({
     initial?.publication || { kind: 'feed', preset: 'feed_portrait', slides: 1 }
   );
   useEffect(() => {
-    api('/api/formats')
+    campaignService
+      .getFormats()
       .then(setFormats)
       .catch((e) => setError(e.message));
   }, []);
@@ -49,7 +51,8 @@ export default function CampaignForm({
     let active = true;
     setLibraryLoading(true);
     setLibraryError('');
-    api('/api/references')
+    referenceService
+      .list()
       .then((items) => {
         if (active) setLibrary((items || []).filter((item) => item.kind !== 'product'));
       })
@@ -69,7 +72,7 @@ export default function CampaignForm({
     setProductSaved('');
     setError('');
     try {
-      const item = await post('/api/references', {
+      const item = await referenceService.create({
         kind: 'product',
         title: photo.name.replace(/\.[^.]+$/, ''),
         upload: await fileData(photo),
@@ -109,13 +112,6 @@ export default function CampaignForm({
   const [imageModel, setImageModel] = useState(initial?.image_model_id || '');
   function changeImageModel(modelId) {
     setImageModel(modelId);
-    if (modelId === 'nvidia:black-forest-labs/flux.1-dev') {
-      setPublication((current) => ({
-        kind: current.kind === 'carousel' ? 'carousel' : 'feed',
-        preset: 'feed_square',
-        slides: current.kind === 'carousel' ? current.slides : 1,
-      }));
-    }
   }
   useEffect(() => {
     if (!selection && models.length)
@@ -125,11 +121,6 @@ export default function CampaignForm({
     if (!imageModel && imageModels.length) setImageModel(imageModels[0].id);
   }, [imageModels, imageModel]);
   const chosenImage = imageModels.find((m) => m.id === imageModel);
-  // FLUX draws at most 1344 px per side, so only the square export fits it.
-  const squareOnly =
-    selection !== 'demo' &&
-    chosenImage?.provider === 'nvidia' &&
-    publication.preset !== 'feed_square';
   const [image, setImage] = useState(initial?.generate_image ?? true),
     [product, setProduct] = useState(initial?.product_id || ''),
     [photo, setPhoto] = useState(initial?.photo || null),
@@ -221,9 +212,6 @@ export default function CampaignForm({
     <Form noValidate onSubmit={submit} className="panel campaign-form">
       <header className="campaign-form-header grid items-center gap-5 pb-7 min-[641px]:grid-cols-[minmax(0,1fr)_minmax(240px,310px)] min-[641px]:gap-6">
         <div className="campaign-form-intro min-w-0">
-          <span className="campaign-eyebrow mb-2.5 inline-flex items-center gap-2 text-xs font-semibold">
-            <Sparkles size={14} aria-hidden="true" /> Estúdio de criação
-          </span>
           <h2>Da sua ideia à campanha</h2>
           <p className="muted text-sm">
             Conte o que deseja divulgar. Ajuste os detalhes e crie seu rascunho.
@@ -236,14 +224,16 @@ export default function CampaignForm({
             value={selection}
             onChange={(e) => setSelection(e.target.value)}
           >
-            <optgroup label="Modelos disponíveis">
-              {models.map((m) => (
-                <option key={m.id} value={m.id} disabled={!m.available}>
-                  {m.label}
-                  {!m.available ? ' · sem chave' : ''}
-                </option>
-              ))}
-            </optgroup>
+            {groupByProvider(models).map(([provider, options]) => (
+              <optgroup key={provider} label={provider}>
+                {options.map((m) => (
+                  <option key={m.id} value={m.id} disabled={!m.available}>
+                    {m.label}
+                    {!m.available ? ' · sem chave' : ''}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
             <option value="demo">Demonstração sem API</option>
           </select>
         </label>
@@ -572,23 +562,21 @@ export default function CampaignForm({
               <label className="block">
                 <span className="field-label">Modelo da arte</span>
                 <select value={imageModel} onChange={(e) => changeImageModel(e.target.value)}>
-                  {imageModels.map((m) => (
-                    <option key={m.id} value={m.id} disabled={!m.available}>
-                      {m.label}
-                      {m.available ? '' : ' · sem chave'}
-                    </option>
+                  {groupByProvider(imageModels).map(([provider, options]) => (
+                    <optgroup key={provider} label={provider}>
+                      {options.map((m) => (
+                        <option key={m.id} value={m.id} disabled={!m.available}>
+                          {m.label}
+                          {m.available ? '' : ' · sem chave'}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
                 {chosenImage?.note && (
                   <span className="muted block text-xs mt-1">{chosenImage.note}</span>
                 )}
               </label>
-            )}
-            {image && squareOnly && (
-              <p className="error">
-                {chosenImage.label} só desenha até 1344 px por lado. Escolha o formato Feed quadrado
-                (1080x1080) ou volte para o modelo padrão.
-              </p>
             )}
           </div>
         </aside>
@@ -624,7 +612,6 @@ export default function CampaignForm({
             helping ||
             busy ||
             !formats.length ||
-            (image && squareOnly) ||
             (mode === 'live' && !models.find((m) => m.id === selection)?.available)
           }
         >

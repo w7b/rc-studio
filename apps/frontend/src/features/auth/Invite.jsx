@@ -1,7 +1,7 @@
 import Form from '../../shared/components/Form.jsx';
 import React, { useState } from 'react';
-import { LoaderCircle, UserPlus } from 'lucide-react';
-import { post } from '../../shared/api/client.js';
+import { LoaderCircle, UserPlus } from '../../shared/icons.js';
+import { sessionService } from '../../services/session.js';
 import { clearHash, hashToken } from '../../shared/hooks/useRoute.js';
 import PasswordInput from '../../shared/components/PasswordInput.jsx';
 
@@ -27,11 +27,11 @@ export default function Invite({ onSignedIn }) {
     setBusy(true);
     setError('');
     try {
-      await post('/api/invites/accept', {
+      await sessionService.acceptInvite({
         token,
-        email: email.trim(),
+        email,
         password,
-        name: name.trim(),
+        name,
       });
       clearHash();
       await onSignedIn();

@@ -80,12 +80,6 @@ figcaption,
   min-height: 0;
 }
 @media (max-width: 1023px) {
-  .hero-art {
-    display: none;
-  }
-  .hero {
-    min-height: 0;
-  }
   .workspace main {
     padding: 24px;
   }
@@ -120,9 +114,6 @@ figcaption,
   }
   .workspace main {
     padding: 20px 16px;
-  }
-  .hero {
-    padding: 24px;
   }
   .panel.p-6,
   .panel.p-8 {
@@ -196,9 +187,6 @@ figcaption,
     height: auto;
     max-height: 380px;
     min-height: 160px;
-  }
-  .hero h1 {
-    font-size: 29px;
   }
   .workspace main {
     padding: 16px 12px;

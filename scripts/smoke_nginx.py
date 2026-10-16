@@ -106,7 +106,7 @@ def verify(base):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--image', default='realcenter-studio:test')
+    parser.add_argument('--image', default='studio-ai:test')
     parser.add_argument('--postgres', action='store_true', help='Usar PostgreSQL descartável e o schema do pacote instalado')
     args = parser.parse_args()
     root = Path(__file__).resolve().parents[1]

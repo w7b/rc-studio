@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Lock, LockOpen } from 'lucide-react';
+import { Lock, LockOpen } from '../icons.js';
 
 export default function PasswordInput({ visibilityLabel = 'senha', ...props }) {
   const [visible, setVisible] = useState(false);

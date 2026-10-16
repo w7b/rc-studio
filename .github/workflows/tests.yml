@@ -70,13 +70,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: docker build --target runtime -t realcenter-studio:test .
-      - run: docker run --rm --network none --mount type=bind,source=${{ github.workspace }}/scripts/smoke.py,target=/tmp/smoke.py,readonly realcenter-studio:test python /tmp/smoke.py
+      - run: docker build --target runtime -t studio-ai:test .
+      - run: docker run --rm --network none --mount type=bind,source=${{ github.workspace }}/scripts/smoke.py,target=/tmp/smoke.py,readonly studio-ai:test python /tmp/smoke.py
       - run: docker compose config --quiet
       - run: docker compose -f compose.yaml -f compose.dev.yaml --profile shared config --quiet
       - run: docker compose -f compose.proxy-local.yaml config --quiet
       - run: docker pull nginx:stable-alpine
-      - run: python scripts/smoke_nginx.py --image realcenter-studio:test --postgres
+      - run: python scripts/smoke_nginx.py --image studio-ai:test --postgres
 
   # Keep one stable required check; path filters could leave PR checks pending.
   test:

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, RefreshCw } from 'lucide-react';
-import { api } from '../../shared/api/client.js';
+import { AlertTriangle, RefreshCw } from '../../shared/icons.js';
+import { systemService } from '../../services/system.js';
 
 // Replaces the old Graphify catalog. That described the product's own source code, which
 // no store could act on; this describes what actually happened.
@@ -38,7 +38,7 @@ export default function Logs() {
 
   async function load() {
     try {
-      setData(await api('/api/logs'));
+      setData(await systemService.getLogs());
       setError('');
     } catch (failure) {
       setError(failure.message);
@@ -67,7 +67,6 @@ export default function Logs() {
     <>
       <div className="page-title">
         <div>
-          <p className="eyebrow">OPERAÇÃO</p>
           <h1>Logs</h1>
           <p className="muted mt-3">
             {data?.scope === 'platform'

@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal } from '../icons.js';
 import Tooltip from './Tooltip.jsx';
+import { overlayRoot } from './overlayRoot.js';
 
 export default function ActionMenu({ label, children, align = 'right', disabled = false }) {
   const [open, setOpen] = useState(false);
@@ -37,6 +38,9 @@ export default function ActionMenu({ label, children, align = 'right', disabled 
   }, [open, place]);
 
   const positioned = Boolean(position);
+  useEffect(() => {
+    if (disabled) setOpen(false);
+  }, [disabled]);
   useLayoutEffect(() => {
     if (open && positioned) items()[0]?.focus({ preventScroll: true });
   }, [open, positioned]);
@@ -67,6 +71,7 @@ export default function ActionMenu({ label, children, align = 'right', disabled 
       index = options.indexOf(document.activeElement);
     if (event.key === 'Escape') {
       event.preventDefault();
+      event.stopPropagation();
       close(true);
     }
     if (event.key === 'Tab') {
@@ -105,7 +110,7 @@ export default function ActionMenu({ label, children, align = 'right', disabled 
           }}
           onClick={() => setOpen((value) => !value)}
         >
-          <MoreHorizontal size={17} />
+          <MoreHorizontal size={17} aria-hidden="true" />
         </button>
       </Tooltip>
       {open &&
@@ -124,7 +129,7 @@ export default function ActionMenu({ label, children, align = 'right', disabled 
           >
             {children}
           </div>,
-          document.body
+          overlayRoot(trigger.current)
         )}
     </div>
   );

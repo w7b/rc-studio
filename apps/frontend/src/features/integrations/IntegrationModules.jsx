@@ -1,7 +1,7 @@
 import Form from '../../shared/components/Form.jsx';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, Database, LoaderCircle, Megaphone } from 'lucide-react';
-import { api, post } from '../../shared/api/client.js';
+import { Check, Database, LoaderCircle, Megaphone } from '../../shared/icons.js';
+import { integrationService } from '../../services/integrations.js';
 import IntegrationStatus from '../../shared/components/IntegrationStatus.jsx';
 import PasswordInput from '../../shared/components/PasswordInput.jsx';
 
@@ -56,7 +56,7 @@ function Module({ module, value, onSaved }) {
     setBusy(true);
     setError('');
     try {
-      setValidation(await post('/api/integrations/meta-ads/validate', {}));
+      setValidation(await integrationService.validateMetaAds());
     } catch (failure) {
       setError(failure.message);
     } finally {
@@ -73,7 +73,7 @@ function Module({ module, value, onSaved }) {
     try {
       const payload = { ...form };
       for (const [name, secret] of Object.entries(secrets)) if (secret) payload[name] = secret;
-      const updated = await post('/api/integrations', { module: module.id, values: payload });
+      const updated = await integrationService.save(module.id, payload);
       setSecrets({});
       setForm(updated[module.id]);
       setValidation(updated[module.id]?.validation);
@@ -171,7 +171,7 @@ export default function IntegrationModules({ only = null }) {
 
   const load = useCallback(async () => {
     try {
-      setData(await api('/api/integrations'));
+      setData(await integrationService.list());
       setError('');
     } catch (failure) {
       setError(failure.message);

@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Activity, Coins, FolderOpen, Image, RefreshCw, Store, Users, Zap } from 'lucide-react';
-import { api } from '../../shared/api/client.js';
+import {
+  Activity,
+  Coins,
+  FolderOpen,
+  Image,
+  RefreshCw,
+  Store,
+  Users,
+  Zap,
+} from '../../shared/icons.js';
+import { adminService } from '../../services/admin.js';
 import MetricCard from '../../shared/components/MetricCard.jsx';
 import Feedback from '../../shared/components/Feedback.jsx';
 import { useRoute } from '../../shared/hooks/useRoute.js';
@@ -25,7 +34,8 @@ export default function AdminMetrics() {
   useEffect(() => {
     let current = true;
     setLoading(true);
-    api('/api/admin/metrics')
+    adminService
+      .getMetrics()
       .then((result) => {
         if (current) {
           setData(result);
@@ -51,7 +61,6 @@ export default function AdminMetrics() {
     <section className="admin-metrics" aria-label="Métricas da plataforma" aria-busy={loading}>
       <div className="section-toolbar">
         <div>
-          <p className="eyebrow">VISÃO DA PLATAFORMA</p>
           <h2>Clientes e consumo</h2>
         </div>
         <div className="period-filter" role="group" aria-label="Período das métricas">

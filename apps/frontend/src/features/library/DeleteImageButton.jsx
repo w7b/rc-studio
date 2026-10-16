@@ -1,8 +1,8 @@
 import React, { useRef, useState } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2 } from '../../shared/icons.js';
 import Modal from '../../shared/components/Modal.jsx';
 import Feedback from '../../shared/components/Feedback.jsx';
-import { post } from '../../shared/api/client.js';
+import { mediaService } from '../../services/media.js';
 
 export default function DeleteImageButton({
   item,
@@ -24,7 +24,7 @@ export default function DeleteImageButton({
     setError('');
     onBusy?.(true);
     try {
-      await post(`/api/${source}/${encodeURIComponent(item.id)}/delete`, {}, token);
+      await mediaService.remove(item.id, source, token);
       setOpen(false);
       onDeleted(item);
     } catch (failure) {

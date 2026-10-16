@@ -26,8 +26,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--control-radius);
   background: var(--surface-2);
   border: 1px solid var(--control-line);
@@ -46,8 +46,9 @@
   position: fixed;
   width: 242px;
   height: 100dvh;
-  padding: 34px 22px;
+  padding: 24px 18px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   transform: translateX(-100%);
   visibility: hidden;
   transition:
@@ -58,23 +59,21 @@
   transform: translateX(0);
   visibility: visible;
   transition-delay: 0s;
-  box-shadow: var(--shadow-modal);
 }
 .sidebar nav {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 7px;
+  margin: 32px 0;
 }
 .sidebar nav a {
   font-size: 13px;
+  min-height: 44px;
   padding: 13px 12px;
 }
 .app-shell > .workspace {
   margin-left: 0;
   width: 100%;
-  transition:
-    margin-left var(--motion-duration) var(--motion-ease),
-    width var(--motion-duration) var(--motion-ease);
 }
 .app-shell.menu-pinned > .workspace {
   margin-left: 242px;
@@ -216,11 +215,9 @@ input[type='checkbox']:disabled {
 /* Open, the toggle tucks into the sidebar's own top-right corner: outside it would sit
    on the breadcrumb, and where it started it covered the wordmark. */
 .menu-toggle.is-open {
-  left: 186px;
-  top: 26px;
-  width: 34px;
-  height: 34px;
-  background: var(--surface-3);
+  left: 180px;
+  top: 24px;
+  background: transparent;
   border-color: transparent;
 }
 .menu-toggle.is-open:hover {
@@ -243,6 +240,12 @@ input[type='checkbox']:disabled {
 }
 .field-help {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-height: 28px;
+  flex-shrink: 0;
+  border-radius: 6px;
   color: var(--text-dim);
   cursor: help;
   transition: color var(--motion-duration) var(--motion-ease);
@@ -250,13 +253,19 @@ input[type='checkbox']:disabled {
 .field-help:hover,
 .field-help:focus-visible {
   color: var(--brand-strong);
-  outline: none;
+}
+.field-help:focus-visible {
+  outline: 2px solid var(--brand-ring);
+  outline-offset: 2px;
 }
 
 .breadcrumb a {
   color: inherit;
   border-radius: 6px;
-  padding: 2px 4px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px;
   transition: color var(--motion-duration) var(--motion-ease);
 }
 .breadcrumb a:hover {
@@ -277,6 +286,56 @@ input[type='checkbox']:disabled {
   font-size: 19px;
   font-weight: 650;
   letter-spacing: -0.01em;
+  min-height: 44px;
+}
+.sidebar nav a.active > svg {
+  color: var(--brand-soft);
+}
+.sidebar nav a.active small {
+  color: var(--text);
+  background: var(--surface-1);
+}
+.app-shell h1 {
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+.app-shell .topbar {
+  min-height: 78px;
+  height: auto;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  gap: 16px;
+}
+@media (pointer: coarse) {
+  .field-help {
+    width: 44px;
+    min-height: 44px;
+  }
+}
+@media (max-width: 600px) {
+  .app-shell h1 {
+    font-size: 1.75rem;
+  }
+  .app-shell .topbar {
+    gap: 4px 12px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar,
+  .menu-scrim,
+  .studio-nav-caret svg,
+  .breadcrumb-caret {
+    transition: none;
+  }
+}
+@media (forced-colors: active) {
+  input[type='checkbox'] {
+    appearance: auto;
+  }
+  input[type='checkbox']::after {
+    content: none;
+  }
 }
 .sidebar .wordmark strong {
   display: inline;
@@ -286,33 +345,6 @@ input[type='checkbox']:disabled {
   color: var(--brand);
 }
 
-/* Studio actions use the same cursor-following glow as the public client cards. */
-.app-shell .button.primary {
-  background: var(--control-background);
-  border-color: var(--control-line);
-  color: var(--text);
-  box-shadow: none;
-}
-.app-shell .button:not(.warning):not(.action-danger):not(.text-red-700):hover:not(:disabled) {
-  background: var(--control-background);
-  border-color: var(--control-line);
-  color: var(--text);
-  box-shadow: none;
-  transform: none;
-}
-.button.studio-spotlight,
-.button.primary.studio-spotlight {
-  --spotlight-radius: 90px;
-  --spotlight-color: color-mix(in srgb, var(--brand) 35%, transparent);
-}
-.button.studio-spotlight:hover:not(:disabled),
-.button.primary.studio-spotlight:hover:not(:disabled) {
-  background: var(--control-background);
-  border-color: var(--control-line);
-  color: var(--text);
-  box-shadow: none;
-  transform: none;
-}
 @media (prefers-reduced-motion: no-preference) {
   .sidebar .nav-child {
     animation: studio-nav-enter 160ms ease-out;

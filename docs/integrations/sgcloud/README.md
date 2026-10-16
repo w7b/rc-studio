@@ -1,6 +1,6 @@
 # SGCloud: contrato e escopo de integração
 
-O adaptador e mock ficam em `apps/backend/src/realcenter_marketing/infrastructure/integrations/sgcloud.py`.
+O adaptador e mock ficam em `apps/backend/src/studio_ai/infrastructure/integrations/sgcloud.py`.
 Os métodos internos `get_product`, `get_stock` e `get_sales` não prometem endpoints do
 fornecedor. O mock começa vazio, recebe fixtures e devolve `None` para dado ausente,
 sem presumir estoque zero; vendas usam o período exato da fixture. Não expõe preços,

@@ -2,11 +2,11 @@ import ast
 import importlib.util
 from pathlib import Path
 
-PACKAGE = Path(__file__).resolve().parents[1] / 'src/realcenter_marketing'
+PACKAGE = Path(__file__).resolve().parents[1] / 'src/studio_ai'
 
 
 def imports(path):
-    module = 'realcenter_marketing.' + path.relative_to(PACKAGE).with_suffix('').as_posix().replace('/', '.')
+    module = 'studio_ai.' + path.relative_to(PACKAGE).with_suffix('').as_posix().replace('/', '.')
     for node in ast.walk(ast.parse(path.read_text(encoding='utf-8'))):
         if isinstance(node, ast.Import):
             yield from (alias.name for alias in node.names)
@@ -23,10 +23,10 @@ def test_inner_layers_do_not_depend_on_adapters_or_sdk():
         for path in (PACKAGE / layer).rglob('*.py'):
             for name in imports(path):
                 forbidden = ('agents', 'openai', 'http', 'requests', 'dotenv', 'PIL',
-                             'realcenter_marketing.infrastructure', 'realcenter_marketing.bootstrap',
-                             'realcenter_marketing.presentation')
+                             'studio_ai.infrastructure', 'studio_ai.bootstrap',
+                             'studio_ai.presentation')
                 if layer == 'domain':
-                    forbidden += ('realcenter_marketing.application',)
+                    forbidden += ('studio_ai.application',)
                 if any(name == item or name.startswith(item + '.') for item in forbidden):
                     violations.append((str(path.relative_to(PACKAGE)), name))
     assert not violations
@@ -47,4 +47,4 @@ def test_application_does_not_access_files_or_spawn_threads():
 
 def test_http_has_no_concrete_infrastructure_imports():
     assert not [name for p in (PACKAGE / 'presentation/http').rglob('*.py')
-                for name in imports(p) if name.startswith('realcenter_marketing.infrastructure')]
+                for name in imports(p) if name.startswith('studio_ai.infrastructure')]

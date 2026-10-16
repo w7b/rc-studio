@@ -279,9 +279,9 @@ O `Caddyfile` anterior permanece como exemplo alternativo e não é iniciado pel
 
 ```powershell
 docker compose logs --tail 100 nginx studio
-docker build -t realcenter-studio:test .
+docker build -t studio-ai:test .
 docker pull nginx:stable-alpine
-python scripts/smoke_nginx.py --image realcenter-studio:test --postgres
+python scripts/smoke_nginx.py --image studio-ai:test --postgres
 ```
 
 O teste sobe containers descartáveis com identidade e dados sintéticos em uma rede dedicada, publicando somente o proxy no loopback e sem chamar provedores. Com `--postgres`, usa PostgreSQL real e verifica que o pacote instalado inclui o schema SQL e consegue iniciar a autenticação. Verifica também SPA/assets, login, cookie, CSRF, rejeição de Host inválido, upload de 8 MiB, rejeição de requisição acima do limite, mídia, campanha demo, download, logout e proteção contra IP falsificado. O CI executa esse modo. Nenhum serviço ou volume já existente é removido por ele.

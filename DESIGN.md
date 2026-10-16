@@ -1,9 +1,9 @@
 ---
 version: alpha
 name: Studio AI
-description: Marketing para o comércio local, com navegação translúcida e administração sóbria.
+description: Marketing para o comércio local, com apresentação ampla e ferramentas foscas.
 colors:
-  primary: '#ef863d'
+  primary: '#e5e5e5'
   background: '#131313'
   surface: '#171717'
   text: '#e5e5e5'
@@ -11,16 +11,16 @@ colors:
   whatsapp: '#25d366'
 typography:
   sans:
-    fontFamily: 'Google Sans, Segoe UI, Arial, sans-serif'
+    fontFamily: 'Outfit Variable, Segoe UI, sans-serif'
   mono:
     fontFamily: 'ui-monospace, monospace'
 rounded:
-  DEFAULT: '10px'
-  card: '13px'
-  navigation: '16px'
+  DEFAULT: '6px'
+  card: '8px'
+  navigation: '8px'
 spacing:
-  page-max: '1080px'
-  section-gap: '72px'
+  page-max: '1440px'
+  section-gap: 'clamp(80px, 9vw, 144px)'
 components:
   button: {}
   card: {}
@@ -29,195 +29,105 @@ components:
   metrics: {}
 ---
 
-# Studio AI Design System
+# Studio AI — direção visual
 
-## Overview
+## Contexto
 
-### Creative North Star
+Comerciantes brasileiros criam e revisam campanhas em pt-BR. A Home apresenta
+artes reais, processo e contato. Studio e administração priorizam formulários,
+estado das operações e leitura dos resultados. A direção mantém o tema escuro,
+tipografia ampla, superfícies foscas, divisórias discretas e conteúdo alinhado.
+Regras funcionais pertencem ao UX-CONTRACT.md.
 
-Uma bancada de criação para pequenos comerciantes: as artes reais ocupam a vitrine,
-enquanto os controles usam superfícies discretas e uma única cor de destaque.
-A assinatura pública é o nome completo de cada categoria sendo escrito e apagado.
+## Fontes canônicas
 
-### Product context and register
+Todos os caminhos abaixo estão em apps/frontend/src:
 
-Comerciantes brasileiros usam o Studio em português para produzir e revisar campanhas.
-A home e o login têm registro de apresentação; `/studio` e `/admin` são ferramentas
-operacionais. O painel privilegia comparação de números, leitura e ações explícitas.
-Referências: README, ADR 002 e pedido de navegação com glassmorphism. Preservar a
-marca existente; evitar gradientes decorativos nos números, bordas pesadas e dados fictícios.
+- shared/styles/tokens.css: paleta, espaçamentos, controles, largura da Home e menu público.
+- shared/styles/global.css: ordem de importação, camadas e tokens Tailwind.
+- shared/styles/public-header.css: geometria e estados do menu público.
+- features/home/Home.jsx: composição responsiva em Tailwind.
+- features/home/home-effects.css: tipografia e tratamento das imagens da Home.
+- features/home/useHomeMotion.js: entrada das artes com GSAP e ScrollTrigger.
+- shared/styles/controls.css: controles compartilhados.
+- app/studio-shell.css: navegação do Studio.
+- shared/brand/applyTheme.js: cores da loja e contraste.
 
-`shared/styles/tokens.css` é a fonte canônica de variáveis (modelo B): marca,
-superfícies, texto, bordas, feedback, vidro, sombras, espaçamento e movimento.
-`global.css` ordena as camadas de base, tema, responsividade, telas e efeitos.
-`app/studio-shell.css` concentra a navegação; `controls.css` contém estados dos
-controles compartilhados. Layout novo usa utilitários Tailwind nos componentes.
-Esses estilos consomem os tokens; `applyTheme.js` adapta a marca
-por loja e escolhe o texto de contraste. Este documento espelha os valores.
+Os tokens de runtime prevalecem. Este documento espelha os valores e a intenção;
+não é um segundo sistema de medidas independente do código.
 
-## Colors
+## Cor e material
 
-Fundo neutro #131313, superfície #171717, texto #e5e5e5 e apoio #a3a3a3. Destaque #ef863d.
-WhatsApp #25d366 identifica contato. Cores de loja só se aplicam ao Studio;
-home e login restauram o tema público. Erro e sucesso mantêm texto explicativo.
-Inputs, selects e textareas usam `--field-background: var(--surface-1)`, borda
-`--line-strong` e hover `--line-hover`, com foco na marca. Autofill usa a mesma
-superfície, inclusive com foco. O foco dos campos muda a borda existente de 1px,
-sem empilhar outline e sombra. Botões usam `--control-background` e `--control-hover`,
-derivados de `--surface-2` e `--surface-3`. Não adicionar cinzas fixos nos componentes.
-Feedback usa tokens semânticos `--danger-*`, `--success-*` e `--warning-text`.
-Nova tentativa de campanha fecha o menu de ações e pede confirmação em modal.
-Avisos de custo usam amarelo (`--warning-*`); solicitações aceitas usam feedback
-verde, sem antecipar o sucesso da geração. Falhas e exclusões mantêm vermelho.
-No Studio, botões de ação têm fundo neutro e brilho localizado na cor da loja,
-acompanhando o cursor como nos cards públicos. Ações de aviso e perigo preservam
-suas cores semânticas. O menu lateral desliza ao abrir/fechar, inicia aberto no
-desktop e permanece aberto ao navegar; o X fecha e o hambúrguer reabre.
-Não há botão de fixar/desafixar. No celular, usa sobreposição.
-Submenus começam recolhidos; clicar no módulo pai navega e expande os filhos.
-A flecha alterna a expansão sem navegar. Todas as quinas dos itens têm o mesmo raio.
-A seta usa fundo transparente, com hover apenas no ícone e contorno somente no foco por teclado.
-Breadcrumbs e URLs refletem pais e filhos: Marketing → Biblioteca → Referências,
-`/studio/library/references`. URLs antigas redirecionam preservando parâmetros.
-Configurações reúne Dados pessoais, Segurança, Dados da loja e Brand Kit em subrotas.
-Tooltips em pílula aparecem em ações só com ícones e nas dicas de campos, com foco
-por teclado e Escape. Seleções de imagens e campanhas usam busca, duas linhas por
-resultado e painel limitado à largura do campo/viewport. Imagens mostram miniatura
-na lista e no campo selecionado; referências incluem tipo e dimensões.
-Produto e referência de campanha usam linhas compactas com título e opções de origem:
-biblioteca, arquivo ou nenhuma. Explicações ficam em `FieldHelp`; os campos aparecem
-somente para biblioteca ou envio. Somente a origem ativa entra no pedido.
-A troca de página usa uma entrada curta de opacidade e deslocamento de 6px,
-sem remontar formulários por animação. Respeitar movimento reduzido.
-O controle de visibilidade da senha mantém fundo transparente no hover e destaca
-apenas o cadeado com `--brand-soft`, preservando a área clicável e o foco por teclado.
+Fundo #131313, painéis #171717, controles #202020, texto principal #e5e5e5
+e secundário #a3a3a3. A marca pública é neutra clara. A marca configurada pela
+loja adapta o Studio, com primeiro plano calculado para contraste; Home e login
+restauram a identidade pública. Feedback usa tokens semânticos de perigo,
+sucesso e aviso, sempre acompanhado de texto. Verde identifica o WhatsApp.
 
-## Typography
+O menu público é opaco, com borda de 1px e raio de 8px. Não usa blur ou
+glassmorphism. Superfícies operacionais usam bordas e poucos níveis de elevação;
+sombras de menus/modais são leves. Reflexos que seguem o mouse e partículas
+decorativas foram removidos. Gradientes não são necessários para apresentar dados.
 
-Google Sans variável, hospedada localmente com licença SIL OFL, para títulos e corpo;
-Segoe UI/Arial como fallback. Títulos públicos maiores e peso 650, com espaçamento
-entre letras de -0.04em. Números administrativos usam algarismos tabulares; identificadores
-usam monospace. Datas e números seguem pt-BR. Custos de API mostram USD explicitamente.
+## Tipografia e composição
 
-## Layout
+Outfit Variable é hospedada no próprio build via Fontsource. O texto base herda
+--font-sans; números comparáveis usam algarismos tabulares. Ícones vêm de
+shared/icons.js, adaptador único do Phosphor, com peso bold no contexto global.
+Ícones decorativos ficam ocultos de leitores de tela; ações têm nomes acessíveis.
 
-Home limitada a 1080px. Menu fixo centralizado, 18px do topo, com respiro lateral de 20px.
-No celular, respiro de 12px. Métricas em quatro colunas, duas abaixo de 1100px.
-Página rola naturalmente; apenas tabelas e listas extensas têm rolagem interna.
-Texto animado reserva altura para duas linhas, inclusive nas categorias mais longas.
+A Home usa --home-max-width: 1440px, com margens internas de 20px a 64px.
+Ajustar a largura nesse token, sem criar outro max-width para .home em CSS
+compartilhado. Títulos escalam com o viewport; o espaço reservado à palavra
+rotativa evita deslocamentos do conteúdo entre categorias longas e curtas.
+As artes ocupam quatro colunas a partir de 768px e duas em telas estreitas.
+Estatísticas e garantias usam linhas de separação; os passos têm cartões
+em fluxo normal. O logo usa uma célula limitada, object-fit: contain e margem interna.
 
-## Elevation & Depth
+Home e telas internas usam rolagem do documento. Conteúdo longo não deve ser
+truncado por uma altura de viewport no shell. Tabelas e seletores podem ter
+rolagem própria. Formulários de conta alinham à esquerda com título e abas;
+sua largura máxima de 680px mantém leitura confortável.
 
-Menu público usa rgba(187,187,187,0.31), blur de 13.3px, raio de 16px,
-borda rgba(187,187,187,0.42), brilho interno branco a 10% e sombra 0 4px 30px com preto a 10%.
-Links à esquerda com 64px de distância da marca no desktop; Entrar à direita.
-Abaixo de 420px, links na segunda linha para manter espaço e legibilidade.
-Demais superfícies de vidro derivam de `--surface-1` a 50% e blur de 8px.
-Botões, indicadores da home e clientes
-ganham laranja no hover. Nos clientes, `SpotlightCard` limita o brilho à região do cursor,
-com raio e cor definidos por `--spotlight-radius` e `--spotlight-color`; não colore nem
-move o card inteiro. Desativado para toque e movimento reduzido.
-O mesmo componente atende indicadores, Como funciona, garantias, WhatsApp e Entrar,
-preservando links e botões nativos. Botões usam raio de 90px; o login sólido usa brilho
-claro para manter contraste. Números dos passos usam `--text-muted`.
-Artes da vitrine usam molduras 4:5 com `object-fit: cover`, sem distorção, com recorte
-central nas imagens de proporção diferente.
-Menu de ações usa portal no body, posição fixa e colisão com
-os limites da janela. Modal usa a top layer do dialog nativo e margens automáticas.
+Novos layouts usam Tailwind. CSS mantém tokens, estados compostos e efeitos.
+As folhas de componentes pertencem a layer(components), permitindo que utilitários
+como grid, gap-6, max-w-2xl e text-muted prevaleçam corretamente.
 
-## Shapes
+## Movimento
 
-Controles com raio de 10px, cards 13px e menu público 16px. Bordas de controles derivam
-do texto a 13%; borda mais visível só no hover/foco. Não remover foco para suavizar outline.
+Artes, passos, segmentos e garantias entram pelas laterais uma vez ao alcançar a
+tela: deslocamento de 48px no desktop e 18px no celular, duração de 0.7s e
+intervalo de 0.08s entre itens. O gatilho fica no grid estável; os filhos se
+movem sem modificar o layout.
+Ao terminar, transform e opacity inline são removidos. Voltar no scroll mantém
+as peças no lugar. Não há scrub, pin, escala ou empilhamento dos passos.
 
-## Components
+Os nomes dos segmentos continuam sendo digitados, conforme escolha do usuário.
+Não existe botão de pausa na Home. A preferência de movimento reduzido do sistema
+desativa as entradas e mostra comércio local como texto estático. O texto rotativo
+suspende timers fora da tela e em abas ocultas. GSAP fica restrito à Home, com
+cleanup dos contextos e triggers. Conteúdo é visível sem efeitos.
 
-### Foundational visual states
+## Controles e recuperação
 
-Hover, foco visível, pressionado e desabilitado são globais. Processamento bloqueia
-envios duplicados. Carregamento e erros são anunciados. Nenhum valor fictício preenche
-métricas indisponíveis; dados vazios continuam explicitamente zerados.
+Controles compartilhados preservam nome, foco visível, estado desabilitado e alvo
+de toque de pelo menos 44px. Inputs e textareas usam o mesmo material. FieldHelp
+é um botão separado do label. SearchSelect apresenta seleção, busca e estado vazio.
+Tooltip, ActionMenu e SearchSelect portalam para o dialog aberto mais próximo
+ou para o body, mantendo a camada nativa do modal.
 
-### Buttons and actions
+Modais usam dialog.showModal(), restauração de foco, Escape e bloqueio da rolagem
+de fundo. O menu móvel limita o foco e deixa o conteúdo atrás inerte. Falhas de
+formulário preservam valores. Erros e estados vazios oferecem a próxima ação
+quando ela existe. As regras detalhadas permanecem no contrato de interface.
 
-`.button` é a receita compartilhada de baixo contraste; `.primary` representa a ação
-principal. `WhatsAppButton` concentra o ícone e o destino de contato. Ações de risco
-usam confirmação com Cancelar inicialmente focado.
+## Evolução em 3D
 
-### Navigation and data display
+A Home usa um celular tridimensional com uma campanha real e dois cartões de
+status no fundo do hero. A cena está em `HeroScene3D.jsx` e usa perspectiva e
+`translate3d` em CSS, sem WebGL ou dependência adicional. Ela aparece a partir de
+1024px, responde de forma limitada ao ponteiro e permanece estática quando o
+sistema pede movimento reduzido.
 
-`PublicHeader` compartilha o menu entre home e login. `routes.js` é o mapa canônico do
-Studio. `MetricCard`, `AdminMetrics` e `IntegrationStatus` concentram apresentação de dados.
-O gráfico diário inclui tabela acessível; lojas têm busca e paginação de oito itens.
-`StoreAccessPanel` reúne título, busca, Nova loja, totais, lista e paginação em uma
-única superfície. A vitrine de segmentos usa 20 categorias representativas e “Muito Mais”;
-o catálogo completo permanece nos formulários e na animação do título.
-Cada loja tem um único menu `...`: acessos, convites, módulos, chaves de modelos e status.
-Cargos e remoções ficam em `StoreMembers`; `StoreModelKeys` recebe apenas indicadores
-de configuração, nunca as chaves armazenadas.
-
-`Library` separa Imagens de Produtos do Brand Kit e Artes de campanhas, compartilhando
-busca, ordenação e cards. O tipo Imagem em Referências cadastra um produto por upload.
-Na campanha, arte e legenda vêm primeiro; entregas dos agentes ficam recolhidas em
-Detalhes da campanha, com os nomes Textos, Planejamento, Direção da arte e Revisão.
-
-O menu público é estilizado pela seção `.public-header` de `shared/styles/platform.css`.
-Seus tokens ficam em `tokens.css`: `--public-menu-width` (1080px),
-`--public-menu-radius` (16px), `--public-menu-top` (18px), `--public-menu-background`,
-`--public-menu-border`, `--public-menu-blur` e `--public-menu-shadow`.
-
-### Forms and overlays
-
-A criação de campanha usa uma bancada com modelo no cabeçalho, briefing amplo e
-configurações laterais, empilhadas em telas estreitas. Informações complementares
-e guia da equipe são recolhíveis. O editor em Referências mantém original e resultado
-visíveis para comparar; fundo quadriculado indica transparência, sem confundir esse
-estado com uma textura gravada no arquivo.
-
-`Modal` concentra centralização, Escape, inert nativo e restauração de foco.
-`ActionMenu` concentra portal, teclado e fechamento. `CategoryField` reutiliza o
-catálogo de categorias e aceita texto livre. Listas curtas usam select/datalist nativos;
-campanhas e imagens usam `SearchSelect`, com busca, texto limitado e navegação por teclado.
-Erros ficam junto da operação que falhou.
-`Feedback` separa mensagem e ação com 12–16px; alertas têm margem vertical de 12px
-e deixam ao menos 16px antes de cards adjacentes. Rótulos internos ficam a 8px dos
-campos; grades de formulários usam 16px entre colunas e 20px entre linhas.
-`PasswordInput` mantém a senha oculta inicialmente e usa `Lock`/`LockOpen` do Lucide para alternar visibilidade,
-com nome acessível e estado pressionado. Reutilizado no login, convite, conta e integrações.
-`StoreCategoriesModal` apresenta o catálogo completo com busca e até três seleções.
-Cancelar descarta o rascunho do modal; Aplicar seleção atualiza o formulário; Salvar
-dados da loja persiste. O catálogo canônico está em `resources/catalog/store-categories.json`.
-
-### Iconography
-
-Lucide, 14–20px, ao lado do título ou rótulo. Marca WhatsApp em SVG próprio. Ícones
-decorativos ocultos da árvore acessível; ações só com ícone recebem nome acessível.
-
-### Motion
-
-Hover compartilhado usa `--motion-duration: 240ms` e
-`--motion-ease: cubic-bezier(0.22, 1, 0.36, 1)`, com elevação de 2px nos botões
-e 3px nos cards. Menus de ações permanecem fixos ao passar o mouse. Entradas de cards
-animam opacidade para não competir com o hover. Animação de digitação escreve todas as letras,
-pausa 1800ms, apaga e avança. Preferência por movimento reduzido mostra texto estático.
-Links Clientes e Como funciona rolam suavemente até a seção, com espaço para o menu
-fixo. Com movimento reduzido, a navegação é imediata.
-Studio AI no menu rola até o topo sem recarregar a home. A seção de destino encerra
-sua animação de entrada antes de calcular a rolagem. O contato via WhatsApp fica após
-O que você pode contar, antes do rodapé.
-
-### Content and data visualization
-
-Frases diretas em português, ações nomeadas por verbos. Separar conexão Meta validada
-de publicação disponível. Custos sem preço são sinalizados como cobertura parcial.
-
-## Do's and Don'ts
-
-- Reutilizar componentes e tokens antes de criar outra versão de menu, modal ou contato.
-- Manter controles de permissão no servidor e explicar estados indisponíveis na interface.
-- Não usar números de demonstração como métricas de produção.
-- Não usar hover como única forma de acessar ações ou dados.
-
-## Consultoria de marketing
-
-A rota `/studio/meta-ads/consultations` usa o módulo `meta_ads`, com os mesmos gates de sessão e loja das campanhas. Form, Textarea, Feedback, panel e button são os componentes e estilos canônicos. A seleção de campanhas usa SearchSelect com busca e texto limitado por resultado. A tela coleta fontes com conteúdo fornecido e exibe evidências, lacunas, orçamento sujeito a aprovação e custo separado por consulta. Não adiciona CSS ou etapas ao pipeline. Formulário e resultado permanecem ao navegar entre abas durante a sessão.
+A próxima possibilidade — produto em pedestal — continua registrada em
+`docs/frontend-guide.md` para decisão conjunta.

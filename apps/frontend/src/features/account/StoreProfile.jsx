@@ -1,7 +1,7 @@
 import Form from '../../shared/components/Form.jsx';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Check, LoaderCircle, Store, Tags } from 'lucide-react';
-import { api, post } from '../../shared/api/client.js';
+import { Check, LoaderCircle, Store, Tags } from '../../shared/icons.js';
+import { accountService } from '../../services/account.js';
 import CategoryField from '../../shared/components/CategoryField.jsx';
 import StoreCategoriesModal from './StoreCategoriesModal.jsx';
 
@@ -32,7 +32,7 @@ export default function StoreProfile({ onSaved }) {
 
   const load = useCallback(async () => {
     try {
-      const value = await api('/api/store');
+      const value = await accountService.getStore();
       setState(value);
       setForm({ ...value.profile, hashtags: (value.profile.hashtags || []).join(' ') });
       setError('');
@@ -63,7 +63,7 @@ export default function StoreProfile({ onSaved }) {
     setBusy(true);
     setError('');
     try {
-      const saved = await post('/api/store', form);
+      const saved = await accountService.updateStore(form);
       setState(saved);
       setForm({ ...saved.profile, hashtags: (saved.profile.hashtags || []).join(' ') });
       setDone(true);
@@ -93,10 +93,9 @@ export default function StoreProfile({ onSaved }) {
   return (
     <Form noValidate className="panel p-6 account-panel" onSubmit={submit}>
       <header>
-        <p className="eyebrow">
-          <Store size={13} aria-hidden="true" /> DADOS DA LOJA
-        </p>
-        <h2>Identidade e contato</h2>
+        <h2 className="title-with-icon">
+          <Store size={18} aria-hidden="true" /> Identidade e contato
+        </h2>
         <p className="panel-lead">
           É daqui que os agentes tiram nome, endereço, telefone e hashtags ao escrever a legenda e
           montar a arte. Campo vazio é simplesmente omitido — nada é inventado.

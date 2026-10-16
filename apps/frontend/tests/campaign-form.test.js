@@ -1,35 +1,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { readFileSync, readdirSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { transformSync } from 'esbuild';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildRunRequest } from '../src/features/campaigns/run-request.js';
+import { component } from './render-component.js';
 
-const require = createRequire(import.meta.url);
 const sourceRoot = new URL('../src/', import.meta.url);
-
-function component(path) {
-  // Execute source with the classic JSX transform, independently of Vite's build.
-  // A missing React binding must fail on rendering even when bundling succeeds.
-  const cache = new Map();
-  function load(url) {
-    if (url.pathname.endsWith('.css')) return {};
-    if (cache.has(url.href)) return cache.get(url.href).exports;
-    const module = { exports: {} };
-    cache.set(url.href, module);
-    const { code } = transformSync(readFileSync(url, 'utf8'), {
-      loader: 'jsx',
-      format: 'cjs',
-      jsx: 'transform',
-    });
-    const resolve = (name) => (name.startsWith('.') ? load(new URL(name, url)) : require(name));
-    new Function('module', 'exports', 'require', code)(module, module.exports, resolve);
-    return module.exports;
-  }
-  return load(new URL(path, sourceRoot)).default;
-}
 
 test('every JSX component imports React for the classic runtime', () => {
   for (const path of readdirSync(sourceRoot, { recursive: true }).filter((path) =>

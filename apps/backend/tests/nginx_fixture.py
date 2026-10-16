@@ -4,10 +4,10 @@ import tempfile
 from pathlib import Path
 
 from identity_fake import FakeIdentityStore
-from realcenter_marketing.application.identity.service import IdentityService
-from realcenter_marketing.bootstrap.platform import Identity, build_identity
-from realcenter_marketing.infrastructure.identity.rate_limit import MemoryRateLimiter
-from realcenter_marketing.presentation.http.server import make_server
+from studio_ai.application.identity.service import IdentityService
+from studio_ai.bootstrap.platform import Identity, build_identity
+from studio_ai.infrastructure.identity.rate_limit import MemoryRateLimiter
+from studio_ai.presentation.http.server import make_server
 
 
 class FixtureHasher:

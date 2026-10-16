@@ -31,14 +31,14 @@
   --line-soft: color-mix(in srgb, var(--text) 7%, transparent);
   --text: #e5e5e5;
   --text-muted: #a3a3a3;
-  --text-dim: #737373;
+  --text-dim: #a3a3a3;
 
   /* Shared controls and forms. Autofill uses the same field surface. */
   --control-background: var(--surface-2);
   --control-hover: var(--surface-3);
   --control-line: color-mix(in srgb, var(--text) 13%, transparent);
   --control-line-hover: color-mix(in srgb, var(--text) 22%, transparent);
-  --control-radius: 10px;
+  --control-radius: 6px;
   --field-background: var(--surface-1);
   --field-border: var(--line-strong);
   --field-border-hover: var(--line-hover);
@@ -59,19 +59,15 @@
   --whatsapp-surface: color-mix(in srgb, var(--whatsapp) 8%, var(--surface-1));
   --whatsapp-line: color-mix(in srgb, var(--whatsapp) 30%, transparent);
 
-  /* Glass, overlays and elevation derive from the palette. */
-  --glass: color-mix(in srgb, var(--surface-1) 50%, transparent);
-  --glass-blur: 8px;
-  --spotlight-radius: 240px;
-  --spotlight-color: color-mix(in srgb, var(--brand) 18%, transparent);
+  /* Overlays and restrained elevation derive from the palette. */
   --surface-overlay: color-mix(in srgb, var(--surface-0) 74%, transparent);
   --surface-sticky: color-mix(in srgb, var(--surface-1) 92%, transparent);
   --backdrop: color-mix(in srgb, var(--surface-0) 66%, transparent);
   --shadow-color: #000;
-  --shadow-menu: 0 8px 30px color-mix(in srgb, var(--shadow-color) 24%, transparent);
-  --shadow-modal: 0 24px 60px color-mix(in srgb, var(--shadow-color) 50%, transparent);
-  --shadow-brand: 0 3px 14px color-mix(in srgb, var(--brand) 15%, transparent);
-  --shadow-card-hover: 0 8px 32px color-mix(in srgb, var(--brand) 7%, transparent);
+  --shadow-menu: 0 4px 16px rgb(0 0 0 / 4%);
+  --shadow-modal: 0 12px 36px rgb(0 0 0 / 4%);
+  --shadow-brand: none;
+  --shadow-card-hover: none;
   --mask-ink: #000;
 
   --scroll-thumb: var(--line-hover);
@@ -86,13 +82,15 @@
   --z-header: 40;
   --z-menu: 100;
 
-  /* Public menu customization. */
-  --public-menu-color: 187, 187, 187;
-  --public-menu-background: rgba(var(--public-menu-color), 0.31);
-  --public-menu-border: rgba(var(--public-menu-color), 0.42);
-  --public-menu-blur: 13.3px;
-  --public-menu-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 30px rgba(0, 0, 0, 0.1);
-  --public-menu-width: 1080px;
-  --public-menu-radius: 16px;
+  /* Home width and spacing: shared by the page and public navigation. */
+  --home-max-width: 1440px;
+  --home-gutter: clamp(20px, 4vw, 64px);
+  --home-section-space: clamp(80px, 9vw, 144px);
+
+  /* Opaque editorial navigation. Change these without editing Home.jsx. */
+  --public-menu-background: var(--surface-0);
+  --public-menu-border: var(--line);
+  --public-menu-width: var(--home-max-width);
+  --public-menu-radius: 8px;
   --public-menu-top: 18px;
 }

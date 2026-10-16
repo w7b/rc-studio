@@ -89,9 +89,6 @@ select:focus-visible {
   outline: none;
   border-color: var(--brand-ring);
 }
-.home-contact {
-  margin-top: var(--space-section);
-}
 .library-filters {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -197,62 +194,6 @@ summary {
 .title-with-icon > svg {
   flex-shrink: 0;
 }
-.public-header {
-  position: fixed;
-  top: var(--public-menu-top);
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(var(--public-menu-width), calc(100% - 40px));
-  z-index: var(--z-header);
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 20px;
-  padding: 12px 20px;
-  border: 1px solid var(--public-menu-border);
-  border-radius: var(--public-menu-radius);
-  background: var(--public-menu-background);
-  backdrop-filter: blur(var(--public-menu-blur));
-  -webkit-backdrop-filter: blur(var(--public-menu-blur));
-  box-shadow: var(--public-menu-shadow);
-}
-.public-header nav {
-  margin-left: 44px;
-  display: flex;
-  align-items: center;
-  gap: 26px;
-  font-size: 0.86rem;
-}
-.public-header a {
-  text-decoration: none;
-}
-.public-header nav > a:not(.button) {
-  position: relative;
-  padding-block: 6px;
-  color: var(--text);
-  transition: color var(--motion-duration) var(--motion-ease);
-}
-.public-header nav > a:not(.button)::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: var(--brand);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform var(--motion-duration) var(--motion-ease);
-}
-.public-header nav > a:not(.button):is(:hover, :focus-visible)::after {
-  transform: scaleX(1);
-}
-.public-header nav > a:not(.button):hover {
-  color: var(--brand);
-}
-.public-header .button {
-  min-height: 38px;
-}
 .public-auth {
   padding-top: 120px;
   padding-bottom: 40px;
@@ -264,59 +205,6 @@ summary {
   display: grid;
   gap: 10px;
 }
-.home {
-  max-width: 1080px;
-  padding-top: 78px;
-}
-.home-hero {
-  padding-top: 72px;
-}
-.home-section:target {
-  opacity: 1;
-  transform: none;
-  transition: none;
-}
-.home-hero h1 {
-  max-width: 100%;
-  font-weight: 650;
-  letter-spacing: -0.04em;
-  font-size: clamp(2.25rem, 5.5vw, 4.5rem);
-}
-.rotating-text {
-  display: block;
-  min-height: 2.35em;
-  max-width: 23ch;
-  margin: 0 auto;
-  color: var(--brand);
-  text-wrap: balance;
-}
-.typing-caret {
-  font-weight: 300;
-  animation: caret 1s steps(1) infinite;
-}
-.home .button,
-.glass-button,
-.home-stat,
-.client-card {
-  background: var(--glass);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  border-color: var(--control-line);
-  transition:
-    background-color var(--motion-duration) var(--motion-ease),
-    color var(--motion-duration) var(--motion-ease),
-    border-color var(--motion-duration) var(--motion-ease),
-    box-shadow var(--motion-duration) var(--motion-ease),
-    transform var(--motion-duration) var(--motion-ease),
-    opacity 0.5s ease;
-}
-.home .button:hover,
-.glass-button:hover:not(:disabled) {
-  background: var(--brand);
-  color: var(--brand-contrast);
-  border-color: transparent;
-}
-.home .whatsapp-button,
 .whatsapp-button {
   color: var(--whatsapp);
   border-color: var(--whatsapp-line);
@@ -324,137 +212,12 @@ summary {
   min-height: 46px;
   gap: 10px;
 }
-.home .whatsapp-button:hover {
-  background: var(--brand);
-  color: var(--brand-contrast);
-}
-.home-stat:not(.spotlight-card):hover {
-  background: color-mix(in srgb, var(--brand) 10%, var(--glass));
-  border-color: color-mix(in srgb, var(--brand) 45%, transparent);
-  box-shadow: var(--shadow-card-hover);
-}
-.spotlight-card {
-  position: relative;
-  isolation: isolate;
-}
-.button.spotlight-card {
-  --spotlight-radius: 90px;
-  --spotlight-color: color-mix(in srgb, var(--brand) 35%, transparent);
-}
-.button.spotlight-card:hover:not(:disabled) {
-  background: var(--glass);
-  color: var(--text);
-  border-color: var(--control-line);
-  box-shadow: none;
-}
-.button.whatsapp-button.spotlight-card:hover {
-  background: var(--whatsapp-surface);
-  color: var(--whatsapp);
-  border-color: var(--whatsapp-line);
-}
-.button.primary.spotlight-card {
-  --spotlight-color: color-mix(in srgb, var(--text) 35%, transparent);
-}
-.button.primary.spotlight-card:hover:not(:disabled) {
-  background: var(--brand);
-  color: var(--brand-contrast);
-  border-color: transparent;
-}
-.spotlight-card:disabled::before {
-  display: none;
-}
-.spotlight-card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  pointer-events: none;
-  background: radial-gradient(
-    circle var(--spotlight-radius) at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
-    var(--spotlight-color),
-    transparent 100%
-  );
-  opacity: 0;
-  transition: opacity var(--motion-duration) var(--motion-ease);
-}
-@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
-  .spotlight-card[data-spotlight='active']::before {
-    opacity: 1;
-  }
-}
-.home-stat span {
-  color: var(--text-muted);
-}
-.home-stats {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.home-step-number {
-  color: var(--text-muted);
-  position: static;
-  display: block;
-  margin-bottom: 15px;
-  font-size: 0.8rem;
-}
-.home-closing h2 {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-.home-closing .whatsapp-button {
-  margin-top: 24px;
-}
-.home-tags {
-  max-height: none;
-  overflow: visible;
-  padding: 4px;
-}
-.home-tags li {
-  animation-delay: 0ms !important;
-}
-.home-tags .home-tag-more {
-  color: var(--brand-soft);
-  background: color-mix(in srgb, var(--brand) 8%, transparent);
-  border-color: color-mix(in srgb, var(--brand) 24%, transparent);
-}
-.home-card,
-.home-tags li {
-  transition:
-    background-color var(--motion-duration) var(--motion-ease),
-    border-color var(--motion-duration) var(--motion-ease),
-    color var(--motion-duration) var(--motion-ease),
-    box-shadow var(--motion-duration) var(--motion-ease),
-    transform var(--motion-duration) var(--motion-ease);
-}
-.home-card:hover svg {
-  transform: none;
-}
-.reveal.is-shown .home-card,
-.reveal.is-shown .home-tags li {
-  animation-name: home-card-reveal;
-}
-@keyframes home-card-reveal {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
 @media (hover: hover) and (pointer: fine) {
-  .button:not(.spotlight-card):hover:not(:disabled) {
-    transform: translateY(-2px);
-  }
   .button:active:not(:disabled) {
     transform: translateY(0) scale(0.98);
   }
   .action-menu .button:hover:not(:disabled) {
     transform: none;
-  }
-  .home-stat.is-shown:not(.spotlight-card):hover,
-  .home-card:not(.spotlight-card):hover {
-    transform: translateY(-3px);
   }
 }
 .password-control {
@@ -951,40 +714,6 @@ summary {
   .store-access-panel > .admin-invite {
     margin: 0 18px 18px;
   }
-  .public-header {
-    top: 12px;
-    width: calc(100% - 24px);
-    padding: 10px 12px;
-    gap: 10px;
-  }
-  .public-header nav {
-    margin-left: 0;
-    gap: 10px;
-    font-size: 0.7rem;
-  }
-  .public-header .button {
-    padding: 7px 10px;
-    font-size: 0.75rem;
-  }
-  .public-header .home-mark {
-    font-size: 0.95rem;
-  }
-  .home {
-    padding-inline: 18px;
-  }
-  .home-hero {
-    padding-top: 48px;
-  }
-  .rotating-text {
-    min-height: 2.4em;
-  }
-  .home-stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .home-stat .title-with-icon {
-    gap: 5px;
-    font-size: 0.73rem;
-  }
   .modal-card {
     padding: 18px;
   }
@@ -1015,32 +744,7 @@ summary {
     overflow-wrap: anywhere;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  .typing-caret {
-    display: none;
-  }
-}
 @media (max-width: 420px) {
-  .public-header nav {
-    grid-row: 2;
-    grid-column: 1 / -1;
-    gap: 24px;
-  }
-  .public-header > .button {
-    grid-column: 3;
-    grid-row: 1;
-  }
-  .home-hero {
-    padding-top: 76px;
-  }
   .public-auth {
     padding-top: 150px;
   }
@@ -1050,7 +754,6 @@ summary {
     scrollbar-color: auto;
   }
   .button,
-  .public-header,
   .metric-card {
     border: 1px solid ButtonText;
   }

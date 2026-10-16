@@ -1,6 +1,5 @@
 import React from 'react';
-import { LogIn } from 'lucide-react';
-import SpotlightCard from './SpotlightCard.jsx';
+import { LogIn } from '../icons.js';
 import { useRoute } from '../hooks/useRoute.js';
 
 export default function PublicHeader({ signedIn = false }) {
@@ -32,22 +31,30 @@ export default function PublicHeader({ signedIn = false }) {
     navigate(event.currentTarget.getAttribute('href'));
   }
   return (
-    <header className="public-header">
-      <a className="home-mark" href="/home" onClick={goToTop} aria-label="Studio AI — início">
-        Studio<strong>AI</strong>
+    <>
+      <a className="public-skip-link" href="#main-content">
+        Ir para o conteúdo
       </a>
-      <nav aria-label="Menu principal">
-        <a href={`${home ? '' : '/home'}#como-funciona`} onClick={sectionLink}>
-          Como funciona
+      <header className="public-header grid grid-cols-[1fr_auto] items-center gap-x-5 sm:grid-cols-[auto_1fr_auto]">
+        <a className="home-mark" href="/home" onClick={goToTop} aria-label="Studio AI — início">
+          Studio<strong>AI</strong>
         </a>
-        <a href={`${home ? '' : '/home'}#clientes`} onClick={sectionLink}>
-          Clientes
+        <nav
+          aria-label="Menu principal"
+          className="flex items-center justify-center gap-6 text-sm sm:justify-start sm:pl-10"
+        >
+          <a href={`${home ? '' : '/home'}#como-funciona`} onClick={sectionLink}>
+            Como funciona
+          </a>
+          <a href={`${home ? '' : '/home'}#clientes`} onClick={sectionLink}>
+            Clientes
+          </a>
+        </nav>
+        <a className="button" href={signedIn ? '/studio' : '/login'}>
+          <LogIn size={16} aria-hidden="true" />
+          {signedIn ? 'Abrir Studio' : 'Entrar'}
         </a>
-      </nav>
-      <SpotlightCard as="a" className="button glass-button" href={signedIn ? '/studio' : '/login'}>
-        <LogIn size={16} aria-hidden="true" />
-        {signedIn ? 'Abrir Studio' : 'Entrar'}
-      </SpotlightCard>
-    </header>
+      </header>
+    </>
   );
 }

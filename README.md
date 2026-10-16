@@ -39,6 +39,12 @@ Abra [o Studio](http://127.0.0.1:8765) e siga o [primeiro acesso OWNER](docs/ope
 O perfil `shared` inicia o worker que consome a fila; sem ele, campanhas compartilhadas
 ficam aguardando. Credenciais de modelos ficam no backend, conforme `.env.example`.
 
+O Compose também inicia um Redis privado, sem porta publicada. O backend o usa
+somente para o catálogo de formatos (TTL de 1 hora) e para a configuração pública
+de cada loja (TTL de 60 segundos). Sessões, permissões, campanhas, métricas, mídia
+e escritas não entram no cache. Fora do Compose, `REDIS_URL` é opcional; sem ela o
+backend continua funcionando diretamente sobre as fontes de dados.
+
 Para desenvolvimento local sem login:
 
 ```powershell
@@ -57,9 +63,9 @@ ficam em `brand/logo/`, `brand/references/` e `brand/products/reference-only/`.
 No modo compartilhado, o cadastro da loja cria um kit base editável.
 
 Para atualizar React automaticamente, execute `npm --prefix apps/frontend run dev` em
-outro terminal e abra a URL do Vite. CLI demo: `realcenter-marketing --demo "Campanha institucional"`
-com o ambiente virtual ativado. O servidor também aceita `realcenter-studio` e
-`python -m realcenter_marketing`; a entrada `realcenter_marketing.dashboard` mantém compatibilidade.
+outro terminal e abra a URL do Vite. CLI demo: `studio-ai-cli --demo "Campanha institucional"`
+com o ambiente virtual ativado. O servidor também aceita `studio-ai` e
+`python -m studio_ai`; a entrada `studio_ai.dashboard` mantém compatibilidade.
 
 ## Validação e GitHub
 
@@ -80,7 +86,7 @@ deploy, release ou publicação automática.
 
 | Local | Responsabilidade |
 | --- | --- |
-| `apps/backend/src/realcenter_marketing/` | Domínio, aplicação, adaptadores, HTTP/CLI e composição |
+| `apps/backend/src/studio_ai/` | Domínio, aplicação, adaptadores, HTTP/CLI e composição |
 | `apps/frontend/src/` | App, funcionalidades, componentes e estilos |
 | `resources/` | Manifestos, instruções de agentes, políticas, catálogos e respostas demo |
 | `data/platform/` e `data/tenants/<slug>/` | Configuração privada da plataforma e dados isolados das lojas |
@@ -92,7 +98,7 @@ O clone não substitui backup de banco e arquivos; preserve caminhos relativos e
 
 ## Estrutura
 
-- `apps/backend/` — pacote `realcenter_marketing`: domínio, aplicação, infraestrutura,
+- `apps/backend/` — pacote `studio_ai`: domínio, aplicação, infraestrutura,
   apresentação e bootstrap. Instale da raiz com `python -m pip install -e './apps/backend[dev]'`.
 - `apps/frontend/` — React com Vite e Tailwind. `src/app` compõe a interface,
   `src/features` organiza funcionalidades e `src/shared` guarda cliente HTTP e componentes.

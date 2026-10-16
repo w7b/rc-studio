@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown, Search } from 'lucide-react';
+import { Check, ChevronDown, Search, X } from '../icons.js';
+import { overlayRoot } from './overlayRoot.js';
 
 export default function SearchSelect({
   label,
@@ -44,7 +45,7 @@ export default function SearchSelect({
           Math.min(rect.left, innerWidth - Math.min(rect.width, innerWidth - 16) - 8)
         ),
         width: Math.min(rect.width, innerWidth - 16),
-        maxHeight: Math.min(360, upwards ? above : below),
+        maxHeight: Math.max(96, Math.min(360, upwards ? above : below)),
         ...(upwards ? { bottom: innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
       });
     };
@@ -106,7 +107,7 @@ export default function SearchSelect({
         ref={trigger}
         type="button"
         role="combobox"
-        aria-labelledby={`${id}-label`}
+        aria-labelledby={`${id}-label ${id}-value`}
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         aria-haspopup="listbox"
@@ -117,7 +118,7 @@ export default function SearchSelect({
           setOpen(!open);
         }}
         onKeyDown={(event) => {
-          if (event.key === 'ArrowDown') {
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
             event.preventDefault();
             setQuery('');
             setOpen(true);
@@ -128,7 +129,9 @@ export default function SearchSelect({
           <img src={selected.image} alt="" className="h-9 w-9 shrink-0 rounded-md object-contain" />
         )}
         <span className="min-w-0 flex-1">
-          <span className="block truncate">{selected?.label || placeholder}</span>
+          <span id={`${id}-value`} className="line-clamp-2 break-words">
+            {selected?.label || placeholder}
+          </span>
           {selected?.description && (
             <span className="muted mt-0.5 block truncate text-xs">{selected.description}</span>
           )}
@@ -154,10 +157,23 @@ export default function SearchSelect({
                 type="search"
                 aria-label={`Buscar ${label.toLocaleLowerCase('pt-BR')}`}
                 placeholder="Buscar por nome…"
-                className="w-full pl-9!"
+                className="w-full pl-9! pr-12!"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
+              {query && (
+                <button
+                  type="button"
+                  className="search-select-clear"
+                  aria-label="Limpar busca"
+                  onClick={() => {
+                    setQuery('');
+                    search.current?.focus();
+                  }}
+                >
+                  <X size={16} aria-hidden="true" />
+                </button>
+              )}
             </div>
             <div
               role="listbox"
@@ -205,7 +221,7 @@ export default function SearchSelect({
               )}
             </div>
           </div>,
-          document.body
+          overlayRoot(trigger.current)
         )}
     </div>
   );

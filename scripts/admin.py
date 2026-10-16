@@ -17,9 +17,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'apps/backend/src'))
 
-from realcenter_marketing.application.identity.model import ROLES  # noqa: E402
-from realcenter_marketing.application.identity.service import MIN_PASSWORD  # noqa: E402
-from realcenter_marketing.bootstrap.platform import build_identity  # noqa: E402
+from studio_ai.application.identity.model import ROLES  # noqa: E402
+from studio_ai.application.identity.service import MIN_PASSWORD  # noqa: E402
+from studio_ai.bootstrap.platform import build_identity  # noqa: E402
 
 SLUG = re.compile(r'^[a-z0-9][a-z0-9-]{1,39}$')
 

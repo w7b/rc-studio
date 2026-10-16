@@ -1,5 +1,5 @@
 import React, { useId } from 'react';
-import { Plus, ShieldOff, Store, Users, X } from 'lucide-react';
+import { Plus, ShieldOff, Store, Users, X } from '../../shared/icons.js';
 
 export default function StoreAccessPanel({ search, onSearch, onCreate, totals, children }) {
   const title = useId();

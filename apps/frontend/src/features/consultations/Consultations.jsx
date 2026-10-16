@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { LoaderCircle } from 'lucide-react';
+import { LoaderCircle } from '../../shared/icons.js';
 import Form from '../../shared/components/Form.jsx';
 import Textarea from '../../shared/components/Textarea.jsx';
 import Feedback from '../../shared/components/Feedback.jsx';
@@ -165,13 +165,12 @@ export default function Consultations({ config, busy, onConsult, runs = [] }) {
   return (
     <div className="space-y-6">
       <header>
-        <p className="eyebrow">ESPECIALISTAS SOB DEMANDA</p>
         <h1>Consultoria de marketing</h1>
         <p className="muted mt-2">
           Planeje mídia paga ou analise resultados e SEO com os dados da sua loja.
         </p>
       </header>
-      <Form className="panel p-6 space-y-5" onSubmit={submit}>
+      <Form noValidate className="panel p-6 space-y-5" onSubmit={submit}>
         <label className="block">
           Especialista
           <select
@@ -189,6 +188,7 @@ export default function Consultations({ config, busy, onConsult, runs = [] }) {
         <label className="block">
           O que você precisa?
           <Textarea
+            className="resize-none"
             required
             maxLength={12000}
             rows={4}
@@ -200,6 +200,7 @@ export default function Consultations({ config, busy, onConsult, runs = [] }) {
         <label className="block">
           Fatos confirmados, um por linha
           <Textarea
+            className="resize-none"
             rows={3}
             value={facts}
             disabled={loading}
@@ -237,6 +238,7 @@ export default function Consultations({ config, busy, onConsult, runs = [] }) {
               <label className="block">
                 Conteúdo verificável
                 <Textarea
+                  className="resize-none"
                   required
                   rows={3}
                   value={source.content}

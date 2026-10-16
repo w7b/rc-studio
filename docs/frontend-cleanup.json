@@ -1,0 +1,57 @@
+[
+  {
+    "path": ".pytest_cache",
+    "absolute": "C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\.pytest_cache",
+    "status": "recycled",
+    "files": 7
+  },
+  {
+    "path": "apps/backend/.pytest_cache",
+    "absolute": "C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\apps\\backend\\.pytest_cache",
+    "status": "recycled",
+    "files": 7
+  },
+  {
+    "path": "graphify-out",
+    "absolute": "C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\graphify-out",
+    "status": "recycled",
+    "files": 77
+  },
+  {
+    "path": "realcenter-marketing-ai",
+    "status": "retained",
+    "reason": "Access to the path 'C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\realcenter-marketing-ai\\.pytest_cache' is denied."
+  },
+  {
+    "path": ".architecture-work/durable-pytest-cache",
+    "status": "retained",
+    "reason": "Access to the path 'C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\.architecture-work\\durable-pytest-cache' is denied."
+  },
+  {
+    "path": "apps/backend/.architecture-work",
+    "status": "retained",
+    "reason": "Access to the path 'C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\apps\\backend\\.architecture-work\\durable-pytest-cache' is denied."
+  },
+  {
+    "path": ".test-work",
+    "status": "retained",
+    "reason": "Access to the path 'C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\.test-work\\concurrency-red' is denied."
+  },
+  {
+    "path": "apps/backend/.test-work",
+    "status": "retained",
+    "reason": "Access to the path 'C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\apps\\backend\\.test-work\\pytest-cache' is denied."
+  },
+  {
+    "path": "apps/frontend/src/shared/api",
+    "absolute": "C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\apps\\frontend\\src\\shared\\api",
+    "status": "recycled",
+    "files": 0
+  },
+  {
+    "path": "apps/frontend/src/assets/fonts",
+    "absolute": "C:\\Users\\Gabriel\\Desktop\\create-rc-agents\\apps\\frontend\\src\\assets\\fonts",
+    "status": "recycled",
+    "files": 3
+  }
+]

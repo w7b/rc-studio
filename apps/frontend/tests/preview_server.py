@@ -11,12 +11,12 @@ repo = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(repo / 'apps/backend/tests'))
 sys.path.insert(0, str(repo / 'apps/backend/src'))
 
-from identity_fake import FakeIdentityStore
-from test_auth_http import FastHasher, NoDatabase
-from realcenter_marketing.application.identity.service import IdentityService
-from realcenter_marketing.bootstrap.platform import Identity
-from realcenter_marketing.infrastructure.identity.rate_limit import MemoryRateLimiter
-from realcenter_marketing.presentation.http.server import make_server
+from identity_fake import FakeIdentityStore, FastHasher
+from test_identity import NoDatabase
+from studio_ai.application.identity.service import IdentityService
+from studio_ai.bootstrap.platform import Identity
+from studio_ai.infrastructure.identity.rate_limit import MemoryRateLimiter
+from studio_ai.presentation.http.server import make_server
 
 
 if __name__ == '__main__':

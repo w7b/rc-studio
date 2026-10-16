@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowUpRight, FileText, ShieldCheck, Store, UserCog } from 'lucide-react';
+import { ArrowUpRight, FileText, ShieldCheck, Store, UserCog } from '../../shared/icons.js';
 import { STUDIO_ROUTES } from '../../shared/navigation/routes.js';
 import Account from '../account/Account.jsx';
 import StoreProfile from '../account/StoreProfile.jsx';
@@ -41,7 +41,6 @@ export default function Settings({ page, session, onUpdated, onNavigate }) {
   return (
     <div className="space-y-6">
       <header>
-        <p className="eyebrow">PREFERÊNCIAS DO STUDIO</p>
         <h1>Configurações</h1>
         <p className="muted mt-2">Gerencie sua conta e as informações da loja.</p>
       </header>

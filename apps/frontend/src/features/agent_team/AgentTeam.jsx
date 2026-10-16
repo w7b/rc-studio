@@ -1,5 +1,5 @@
 import React from 'react';
-import { Brain, MessageCircle, PenTool, Palette, Check, LoaderCircle } from 'lucide-react';
+import { Brain, MessageCircle, PenTool, Palette, Check, LoaderCircle } from '../../shared/icons.js';
 const agents = [
   ['marketing_director', 'Marketing Director', 'Estratégia e revisão', Brain],
   ['social_media', 'Social Media', 'Calendário e conteúdo', MessageCircle],

@@ -99,9 +99,7 @@ select::-ms-expand {
   display: none;
 }
 
-/* Logout sits apart from the navigation: it is not another destination, and a stray
-   click on it costs the user their session. Red because it is the one control here that
-   throws work away. */
+/* Session controls sit apart from navigation and share the neutral control palette. */
 .sidebar-account {
   margin-top: auto;
   padding-top: 16px;
@@ -114,149 +112,28 @@ select::-ms-expand {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  min-height: 42px;
+  min-height: 44px;
   padding: 10px 14px;
   border-radius: 9px;
-  border: 1px solid var(--danger-line);
-  background: var(--danger-surface);
-  color: var(--danger-text);
+  border: 1px solid var(--control-line);
+  background: var(--control-background);
+  color: var(--text-muted);
   cursor: pointer;
   font: inherit;
   font-weight: 600;
   font-size: 13px;
 }
 .logout-button:hover {
-  background: var(--danger);
-  border-color: var(--danger-line);
+  background: var(--control-hover);
+  border-color: var(--control-line-hover);
   color: var(--text);
-}
-
-/* --- Product home (public) --- */
-.home-bar {
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 24px;
-  border-bottom: 1px solid var(--line-soft);
-  background: var(--surface-sticky);
-  backdrop-filter: blur(8px);
-}
-.home-mark {
-  font-size: 1.05rem;
-  letter-spacing: -0.01em;
-}
-.home-mark strong {
-  color: var(--brand);
-  margin-left: 2px;
-}
-.home {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 72px 24px 80px;
-  color: var(--text);
-  /* Centred throughout: a left-aligned column this narrow leaves the page looking
-     unfinished on a wide screen. */
-  text-align: center;
-}
-.home-hero h1 {
-  margin: 10px auto 16px;
-  font-size: clamp(1.9rem, 4.4vw, 3rem);
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  max-width: 17ch;
-}
-.home-lead {
-  max-width: 58ch;
-  margin: 0 auto;
-  color: var(--text-muted);
-  line-height: 1.7;
-  font-size: 1.02rem;
-}
-.home-cta {
-  margin-top: 26px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 48px;
-  padding: 0 26px;
-  font-size: 0.96rem;
-}
-.home-section {
-  margin-top: 72px;
-}
-.home-section h2 {
-  margin: 0 0 12px;
-  font-size: 1.35rem;
-  letter-spacing: -0.01em;
-}
-.home-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-  gap: 16px;
-  margin-top: 26px;
-  text-align: left;
-}
-.home-card {
-  padding: 22px;
-  border-radius: 13px;
-  border: 1px solid var(--control-line);
-  background: var(--control-background);
-}
-.home-card svg {
-  color: var(--brand);
-}
-.home-card h3 {
-  margin: 14px 0 8px;
-  font-size: 1rem;
-}
-.home-card p {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 0.9rem;
-  line-height: 1.65;
-}
-.home-tags {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin: 24px 0 0;
-  padding: 0;
-  list-style: none;
-}
-.home-tags li {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 7px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--control-line);
-  font-size: 0.84rem;
-  color: var(--text);
-}
-.home-tags svg {
-  color: var(--brand);
-}
-.home-footer {
-  margin-top: 80px;
-  padding-top: 36px;
-  border-top: 1px solid var(--line-soft);
-}
-.home-footer p {
-  margin-top: 16px;
-  color: var(--text-dim);
-  font-size: 0.84rem;
 }
 
 /* --- Account --- */
 .account-panel {
-  max-width: 620px;
-  /* Centred, so a narrow card does not sit lopsided in a wide workspace. */
-  margin: 0 auto;
+  width: 100%;
+  max-width: 680px;
+  margin: 0;
 }
 .account-panel header h2 {
   margin: 4px 0 6px;
@@ -339,7 +216,7 @@ select::-ms-expand {
 
 .admin-create-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(210px, 100%), 1fr));
   gap: 14px;
 }
 .admin-create-actions {
@@ -422,8 +299,8 @@ select::-ms-expand {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 36px;
-  min-width: 36px;
+  min-height: 44px;
+  min-width: 44px;
   padding: 0 9px;
 }
 .action-menu .button {
@@ -432,9 +309,9 @@ select::-ms-expand {
   justify-content: flex-start;
   gap: 8px;
   width: 100%;
-  min-height: 38px;
+  min-height: 44px;
   text-align: left;
-  white-space: nowrap;
+  white-space: normal;
 }
 .action-menu-left {
   right: auto;
@@ -610,7 +487,7 @@ select::-ms-expand {
 }
 .integration-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(230px, 100%), 1fr));
   gap: 14px;
   margin: 20px 0 4px;
 }

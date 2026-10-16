@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Sparkles, LoaderCircle, Check, X } from 'lucide-react';
+import React, { useEffect, useId, useRef, useState } from 'react';
+import { Sparkles, LoaderCircle, Check, X } from '../../shared/icons.js';
 import FieldHelp from '../../shared/components/FieldHelp.jsx';
 
 /** An answered question becomes a confirmed fact: the same channel the agents already
@@ -19,6 +19,7 @@ export default function BriefAssistant({
   onBusy,
 }) {
   const dialog = useRef(null);
+  const questionId = useId();
   const [loading, setLoading] = useState(false),
     [result, setResult] = useState(null),
     [error, setError] = useState('');
@@ -110,8 +111,7 @@ export default function BriefAssistant({
             </button>
           </div>
           <div>
-            <p className="eyebrow">CREATIVE PRODUCER</p>
-            <h2 className="mt-2">Uma versão mais clara da sua ideia</h2>
+            <h2>Uma versão mais clara da sua ideia</h2>
           </div>
           <p className="caption">{result.suggestion.improved_request}</p>
           {result.suggestion.changes.length > 0 && (
@@ -146,12 +146,13 @@ export default function BriefAssistant({
               </div>
               <div className="brief-questions">
                 {questions.map((question, index) => (
-                  <label className="block nested" key={index}>
-                    <span className="field-label field-title">
-                      {question}
+                  <div className="block nested" key={index}>
+                    <div className="field-label field-title">
+                      <label htmlFor={`${questionId}-${index}`}>{question}</label>
                       <FieldHelp text="Responda só o que estiver confirmado. O que ficar em branco vira pendência e não é inventado." />
-                    </span>
+                    </div>
                     <input
+                      id={`${questionId}-${index}`}
                       type="text"
                       maxLength={1000}
                       value={answers[index] || ''}
@@ -165,7 +166,7 @@ export default function BriefAssistant({
                         if (answered.length && !changed) refine();
                       }}
                     />
-                  </label>
+                  </div>
                 ))}
               </div>
               <button

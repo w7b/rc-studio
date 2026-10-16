@@ -20,12 +20,15 @@
   border: 1px solid var(--line-strong);
   border-radius: var(--control-radius);
   background: var(--surface-1);
-  box-shadow: var(--shadow-modal);
+  box-shadow: none;
 }
-.search-select-option:hover,
+.search-select-option:hover {
+  background: var(--control-hover);
+}
 .search-select-option:focus-visible {
   background: var(--control-hover);
-  outline: none;
+  outline: 2px solid var(--brand-ring);
+  outline-offset: -2px;
 }
 .search-select-option[aria-selected='true'] {
   background: var(--brand-wash);
@@ -37,12 +40,11 @@
   max-width: min(280px, calc(100vw - 24px));
   padding: 6px 11px;
   border: 1px solid var(--line-strong);
-  border-radius: 14px;
+  border-radius: 8px;
   background: var(--surface-2);
   color: var(--text);
-  box-shadow: var(--shadow-card);
-  font: 400 12px/1.45 var(--font-sans, 'Google Sans', sans-serif);
-  pointer-events: none;
+  font: 400 13px/1.5 var(--font-sans);
+  pointer-events: auto;
 }
 
 /* A navigation row owns the same radius on every corner. */
@@ -50,8 +52,8 @@
   border-radius: var(--control-radius);
 }
 .studio-nav-row.is-active {
-  background: var(--brand-soft);
-  color: var(--brand-contrast);
+  background: var(--surface-3);
+  color: var(--text);
 }
 .studio-nav-row.is-child {
   margin-left: 12px;
@@ -70,8 +72,9 @@
   color: inherit;
 }
 .sidebar nav .studio-nav-caret {
-  min-height: 40px;
-  width: 30px;
+  min-height: 44px;
+  width: 44px;
+  flex-shrink: 0;
   padding: 6px;
   justify-content: center;
   border-radius: var(--control-radius);
@@ -84,7 +87,7 @@
   color: var(--brand-soft);
 }
 .sidebar nav .studio-nav-row.is-active .studio-nav-caret {
-  color: var(--brand-contrast);
+  color: var(--text);
 }
 .sidebar nav .studio-nav-row.is-active .studio-nav-caret:hover {
   opacity: 0.65;
@@ -113,4 +116,21 @@
 [aria-label='Seções de configurações'] [aria-current='page'] {
   border-color: var(--brand-line);
   color: var(--brand-soft);
+}
+.search-select-clear {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 46px;
+  border-radius: var(--control-radius);
+  color: var(--text-muted);
+}
+.search-select-clear:hover {
+  color: var(--text);
+}
+.search-select-panel input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
 }

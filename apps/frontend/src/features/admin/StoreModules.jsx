@@ -1,5 +1,5 @@
 import React from 'react';
-import { Check, Megaphone } from 'lucide-react';
+import { Check, Megaphone } from '../../shared/icons.js';
 import Modal from '../../shared/components/Modal.jsx';
 import IntegrationStatus from '../../shared/components/IntegrationStatus.jsx';
 

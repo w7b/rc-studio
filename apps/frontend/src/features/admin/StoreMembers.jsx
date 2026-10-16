@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { UserMinus } from 'lucide-react';
+import { UserMinus } from '../../shared/icons.js';
 import Modal from '../../shared/components/Modal.jsx';
+import { adminService } from '../../services/admin.js';
 
 export const ROLE_HELP = {
   DEFAULT: 'Cota reduzida',
@@ -39,7 +40,7 @@ export default function StoreMembers({ tenant, roles, busy, error, onChange, onC
               className="button action-danger"
               disabled={busy}
               onClick={() =>
-                onChange(confirmation.path, confirmation.payload, () => setConfirmation(null))
+                onChange(confirmation.operation, confirmation.payload, () => setConfirmation(null))
               }
             >
               {confirmation.label}
@@ -68,7 +69,7 @@ export default function StoreMembers({ tenant, roles, busy, error, onChange, onC
                       title: `Alterar o cargo de ${member.name || member.email}?`,
                       lead: `Novo cargo: ${event.target.value}. ${event.target.value === 'OWNER' ? 'Isso concede administração de toda a plataforma.' : 'As permissões serão atualizadas imediatamente.'}`,
                       label: 'Alterar cargo',
-                      path: '/api/admin/memberships',
+                      operation: adminService.updateMembership,
                       payload: {
                         user_id: member.id,
                         tenant_id: tenant.id,
@@ -93,7 +94,7 @@ export default function StoreMembers({ tenant, roles, busy, error, onChange, onC
                       title: `Remover o acesso de ${member.name || member.email}?`,
                       lead: `Esta pessoa deixará de acessar ${tenant.name}.`,
                       label: 'Remover acesso',
-                      path: '/api/admin/memberships/revoke',
+                      operation: adminService.revokeMembership,
                       payload: { user_id: member.id, tenant_id: tenant.id },
                     })
                   }

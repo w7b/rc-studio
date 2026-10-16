@@ -1,9 +1,27 @@
-/* Preserve import order: foundation, themes, responsive rules, screens and effects. */
+/* Utilities intentionally win over component recipes. Import styles only here. */
 @import 'tailwindcss';
-@import './foundation.css';
-@import './theme.css';
-@import './responsive.css';
-@import './screens.css';
-@import './overlays.css';
-@import './../../features/home/home-effects.css';
-@import './forms-config.css';
+@import './foundation.css' layer(components);
+@import './theme.css' layer(components);
+@import './responsive.css' layer(components);
+@import './screens.css' layer(components);
+@import './overlays.css' layer(components);
+@import './forms-config.css' layer(components);
+@import '../../features/campaigns/campaign-form.css' layer(components);
+@import '../../features/references/reference-editor.css' layer(components);
+@import './platform.css' layer(components);
+@import '../../app/studio-shell.css' layer(components);
+@import './controls.css' layer(components);
+@import './public-header.css' layer(components);
+@import '../../features/home/home-effects.css' layer(components);
+
+@theme inline {
+  --font-sans: 'Outfit Variable', 'Segoe UI', sans-serif;
+  --color-canvas: var(--surface-0);
+  --color-surface: var(--surface-1);
+  --color-raised: var(--surface-2);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-line: var(--line);
+  --color-accent: var(--brand);
+  --color-on-accent: var(--brand-contrast);
+}

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Coins, Download } from 'lucide-react';
+import { Coins, Download } from '../../shared/icons.js';
+import { campaignService } from '../../services/campaigns.js';
 
 const agentLabels = {
   'Marketing Director': 'Director',
@@ -35,11 +36,11 @@ export default function CostSummary({ usage, runId }) {
         <div className="cost-title">
           <Coins size={20} />
           <div>
-            <p className="eyebrow">CONSUMO DA API</p>
-            <h2>{money(usage.total_cost_usd)}</h2>
+            <h2>Consumo da API</h2>
+            <p className="text-xl font-semibold tabular-nums">{money(usage.total_cost_usd)}</p>
           </div>
         </div>
-        <a className="button small" href={`/api/runs/${runId}/files/usage.json`} download>
+        <a className="button small" href={campaignService.fileUrl(runId, 'usage.json')} download>
           <Download size={14} /> Dados
         </a>
       </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Trash2, Pencil, Type, TriangleAlert } from 'lucide-react';
+import { RotateCcw, Trash2, Pencil, Type, TriangleAlert } from '../../shared/icons.js';
 import ActionMenu from '../../shared/components/ActionMenu.jsx';
 import Modal from '../../shared/components/Modal.jsx';
 import Feedback from '../../shared/components/Feedback.jsx';

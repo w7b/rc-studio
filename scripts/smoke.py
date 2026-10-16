@@ -7,14 +7,14 @@ import time
 from pathlib import Path
 from urllib.request import Request, urlopen
 
-from realcenter_marketing.presentation.http.server import make_server
-from realcenter_marketing.infrastructure.identity.database import SCHEMA
+from studio_ai.presentation.http.server import make_server
+from studio_ai.infrastructure.identity.database import SCHEMA
 
 
 def main():
     # Editable installs find this next to the source; wheels must package it too.
     assert SCHEMA.is_file(), 'O pacote instalado não inclui o schema de identidade'
-    with tempfile.TemporaryDirectory(prefix='realcenter-smoke-') as directory:
+    with tempfile.TemporaryDirectory(prefix='studio-ai-smoke-') as directory:
         root = Path(directory)
         (root / 'brand').mkdir()
         (root / 'brand/brand.md').write_text('Marca sintética para teste offline. Fatos comerciais pendentes.', encoding='utf-8')

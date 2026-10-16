@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { FolderOpen, ArrowUpRight, Plus, ChevronRight, Menu, X } from 'lucide-react';
-import { api, post } from '../shared/api/client.js';
+import { FolderOpen, ArrowUpRight, Plus, ChevronRight, Menu, X } from '../shared/icons.js';
+import { sessionService } from '../services/session.js';
+import { campaignService } from '../services/campaigns.js';
+import { consultationService } from '../services/consultations.js';
+import { mediaService } from '../services/media.js';
+import { referenceService } from '../services/references.js';
 import { modelLabel } from '../shared/catalog/models.js';
 import References from '../features/references/References.jsx';
 import Library from '../features/library/Library.jsx';
 import CampaignActions from '../features/campaigns/CampaignActions.jsx';
 import Feedback from '../shared/components/Feedback.jsx';
-import { followSpotlight } from '../shared/components/SpotlightCard.jsx';
 import CampaignForm from '../features/campaigns/CampaignForm.jsx';
 import CampaignResults from '../features/campaigns/CampaignResults.jsx';
 import IntegrationModules from '../features/integrations/IntegrationModules.jsx';
@@ -59,15 +62,50 @@ export default function App({
   }, []);
   useEffect(() => {
     if (!menuOpen) return;
-    const escape = (event) => {
+    const mobile = !desktopMenu;
+    const previousOverflow = document.body.style.overflow;
+    const sidebar = document.getElementById('studio-navigation');
+    const toggle = menuToggle.current;
+    if (mobile) {
+      document.body.style.overflow = 'hidden';
+      toggle?.focus({ preventScroll: true });
+    }
+    const keydown = (event) => {
       if (event.key === 'Escape') {
         setMenuOpen(false);
-        menuToggle.current?.focus();
+        toggle?.focus({ preventScroll: true });
+      }
+      if (!mobile || event.key !== 'Tab') return;
+      const controls = [
+        toggle,
+        ...sidebar.querySelectorAll('a[href], button:not(:disabled), [tabindex="0"]'),
+      ].filter((element) => element && element.getClientRects().length);
+      const first = controls[0];
+      const last = controls.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
       }
     };
-    window.addEventListener('keydown', escape);
-    return () => window.removeEventListener('keydown', escape);
-  }, [menuOpen]);
+    const keepFocus = (event) => {
+      if (mobile && event.target !== toggle && !sidebar?.contains(event.target)) {
+        toggle?.focus({ preventScroll: true });
+      }
+    };
+    window.addEventListener('keydown', keydown);
+    document.addEventListener('focusin', keepFocus);
+    return () => {
+      window.removeEventListener('keydown', keydown);
+      document.removeEventListener('focusin', keepFocus);
+      if (mobile) {
+        document.body.style.overflow = previousOverflow;
+        if (toggle?.isConnected) toggle.focus({ preventScroll: true });
+      }
+    };
+  }, [menuOpen, desktopMenu]);
   React.useLayoutEffect(() => {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const animation = pageContent.current?.animate(
@@ -98,9 +136,11 @@ export default function App({
   async function refresh() {
     try {
       const [state, assets] = await Promise.all([
-        enabled('campaigns') ? api('/api/runs') : Promise.resolve({ runs: [], active_id: null }),
+        enabled('campaigns')
+          ? campaignService.list()
+          : Promise.resolve({ runs: [], active_id: null }),
         ['campaigns', 'art_lib', 'references'].some(enabled)
-          ? api('/api/media')
+          ? mediaService.list()
           : Promise.resolve([]),
       ]);
       setRuns(state.runs);
@@ -124,7 +164,8 @@ export default function App({
       if (!stopped)
         timer = setTimeout(poll, document.hidden ? 15000 : activeRef.current ? 2000 : 6000);
     }
-    api('/api/config')
+    sessionService
+      .getConfig()
       .then(setConfig)
       .catch((e) => setError(e.message));
     poll();
@@ -134,7 +175,7 @@ export default function App({
     };
   }, [session?.modules]);
   async function create(payload) {
-    const result = await post('/api/runs', payload, config.token);
+    const result = await campaignService.create(payload, config.token);
     setActive(result.id);
     navigate(campaignUrl(result.id));
     await refresh();
@@ -142,7 +183,7 @@ export default function App({
   async function assist(payload) {
     setAssisting(true);
     try {
-      return await post('/api/brief-assist', payload, config.token);
+      return await campaignService.assistBrief(payload, config.token);
     } finally {
       await refresh();
       setAssisting(false);
@@ -151,51 +192,37 @@ export default function App({
   async function consult(payload) {
     setAssisting(true);
     try {
-      return await post('/api/consultations', payload, config.token);
+      return await consultationService.create(payload, config.token);
     } finally {
       await refresh();
       setAssisting(false);
     }
   }
   async function image(id, payload = {}) {
-    await post('/api/runs/' + id + '/image', payload, config.token);
+    await campaignService.generateImage(id, payload, config.token);
     setActive(id);
     await refresh();
   }
   async function retry(id) {
-    const result = await post('/api/runs/' + id + '/retry', {}, config.token);
+    const result = await campaignService.retry(id, config.token);
     setRetryNotice(result.id);
     setActive(result.id);
     navigate(campaignUrl(result.id));
     await refresh();
   }
   async function rename(id, title) {
-    await post('/api/runs/' + id + '/rename', { title }, config.token);
+    await campaignService.rename(id, title, config.token);
     await refresh();
   }
   async function remove(id) {
-    await post('/api/runs/' + id + '/delete', {}, config.token);
+    await campaignService.remove(id, config.token);
     if (selected === id) {
       setPage('history');
     }
     await refresh();
   }
   async function edit(id) {
-    const data = await api('/api/runs/' + id + '/draft');
-    function file(value, name) {
-      if (!value) return null;
-      const bytes = Uint8Array.from(atob(value), (c) => c.charCodeAt(0));
-      const png = bytes[0] === 137;
-      return new File([bytes], name + (png ? '.png' : '.jpg'), {
-        type: png ? 'image/png' : 'image/jpeg',
-      });
-    }
-    setDraft({
-      ...data,
-      id,
-      photo: file(data.upload, 'produto'),
-      reference: file(data.reference_upload, 'referencia'),
-    });
+    setDraft(await campaignService.getDraft(id));
     setPage('create');
   }
   const actions = (run) => (
@@ -209,17 +236,7 @@ export default function App({
     />
   );
   async function useReference(item) {
-    const response = await fetch(item.url);
-    if (!response.ok) throw new Error('Não foi possível carregar a referência');
-    const blob = await response.blob();
-    setDraft({
-      id: 'reference-' + item.id,
-      [item.kind === 'product' ? 'photo' : 'reference']: new File(
-        [blob],
-        item.title + '.' + item.extension,
-        { type: blob.type }
-      ),
-    });
+    setDraft(await referenceService.getCampaignDraft(item));
     setPage('create');
   }
   function open(id) {
@@ -228,25 +245,7 @@ export default function App({
   const historical = media.filter((m) => !m.product && m.run_id === 'assets');
   const selectedRun = runs.find((r) => r.id === selected);
   return (
-    <div
-      className={'app-shell' + (pinnedOpen ? ' menu-pinned' : '')}
-      onPointerMove={(event) => {
-        const button = event.target.closest(
-          '.button:not(.warning):not(.action-danger):not(.text-red-700)'
-        );
-        if (!button || button.disabled) return;
-        button.classList.add('spotlight-card', 'studio-spotlight');
-        followSpotlight(button, event);
-      }}
-      onPointerOut={(event) => {
-        const button = event.target.closest('.studio-spotlight');
-        if (button && !button.contains(event.relatedTarget)) delete button.dataset.spotlight;
-      }}
-      onPointerCancel={(event) => {
-        const button = event.target.closest('.studio-spotlight');
-        if (button) delete button.dataset.spotlight;
-      }}
-    >
+    <div className={'app-shell' + (pinnedOpen ? ' menu-pinned' : '')}>
       <Tooltip text={menuOpen ? 'Fechar menu' : 'Abrir menu'}>
         <button
           ref={menuToggle}
@@ -283,7 +282,7 @@ export default function App({
           if (!pinnedOpen && !parent) setMenuOpen(false);
         }}
       />
-      <div className="workspace">
+      <div className="workspace" inert={menuOpen && !desktopMenu}>
         <header className="topbar">
           <StudioBreadcrumbs page={page} onNavigate={setPage} />
           <div className="flex items-center gap-3">
@@ -395,7 +394,6 @@ export default function App({
             <>
               <div className="page-title">
                 <div>
-                  <p className="eyebrow">SEU HISTÓRICO CRIATIVO</p>
                   <h1>Campanhas</h1>
                 </div>
                 <button
@@ -467,7 +465,6 @@ export default function App({
             <>
               <div className="page-title">
                 <div>
-                  <p className="eyebrow">DO BRIEFING À ENTREGA</p>
                   <h1>Sua campanha</h1>
                 </div>
                 <button className="button" onClick={() => setPage('history')}>

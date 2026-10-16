@@ -1,7 +1,7 @@
 import Form from '../../shared/components/Form.jsx';
 import React, { useState } from 'react';
-import { Check, LoaderCircle } from 'lucide-react';
-import { post, setCsrf } from '../../shared/api/client.js';
+import { Check, LoaderCircle } from '../../shared/icons.js';
+import { accountService } from '../../services/account.js';
 import PasswordInput from '../../shared/components/PasswordInput.jsx';
 
 const MIN_PASSWORD = 8;
@@ -24,7 +24,7 @@ export default function Account({ session, onUpdated, section = 'profile' }) {
     setError('');
     setDone('');
     try {
-      await post('/api/account', { name, email: email.trim(), phone: phone.trim() });
+      await accountService.updateDetails({ name, email, phone });
       setDone('Dados atualizados.');
       if (onUpdated) await onUpdated();
     } catch (failure) {
@@ -45,8 +45,7 @@ export default function Account({ session, onUpdated, section = 'profile' }) {
     try {
       // Changing the password ends every other session, so the server hands this one a
       // fresh token to keep working with.
-      const result = await post('/api/account/password', { current, password });
-      setCsrf(result.csrf);
+      await accountService.changePassword({ current, password });
       setCurrent('');
       setPassword('');
       setConfirmation('');
@@ -64,7 +63,6 @@ export default function Account({ session, onUpdated, section = 'profile' }) {
       aria-label={section === 'security' ? 'Segurança' : 'Dados pessoais'}
     >
       <header>
-        <p className="eyebrow">MINHA CONTA</p>
         <h2>{section === 'security' ? 'Segurança' : 'Dados pessoais'}</h2>
         <p className="panel-lead">Alterações valem para a sua conta, não para a loja.</p>
       </header>
@@ -82,8 +80,6 @@ export default function Account({ session, onUpdated, section = 'profile' }) {
 
       {section === 'profile' && (
         <Form noValidate className="account-form" onSubmit={saveDetails}>
-          <h3>Dados pessoais</h3>
-
           <label className="field-label" htmlFor="account-name">
             Nome
           </label>

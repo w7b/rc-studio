@@ -27,32 +27,7 @@
   background: var(--surface-3);
   color: var(--text);
 }
-.hero {
-  background: var(--brand-wash);
-  border-color: var(--brand-line);
-}
-.hero h1 {
-  color: var(--text);
-}
-.hero h1 em {
-  color: var(--brand-soft);
-}
-.hero p:last-child {
-  color: var(--brand-soft);
-}
 .eyebrow {
-  color: var(--brand-soft);
-}
-.orbit {
-  border-color: var(--brand-line);
-}
-.hero-sticker {
-  background: var(--brand-soft);
-  box-shadow: 9px 9px var(--brand-wash);
-}
-.floating-tag {
-  background: var(--brand-wash);
-  border-color: var(--brand-line);
   color: var(--brand-soft);
 }
 .muted {
@@ -223,8 +198,8 @@ footer {
   border-color: var(--line) !important;
 }
 .cost-card {
-  border-color: var(--brand-line);
-  background: linear-gradient(135deg, var(--brand-wash), var(--surface-2));
+  border-color: var(--line);
+  background: var(--surface-2);
 }
 .cost-heading,
 .cost-title {
@@ -253,21 +228,19 @@ footer {
   margin-top: 20px;
 }
 .cost-grid > div {
-  background: var(--surface-1);
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  padding: 15px;
+  padding: 4px 0;
   display: grid;
   gap: 5px;
 }
 .cost-grid span,
 .cost-grid small {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 .cost-grid strong {
   font-size: 15px;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 .cost-details {
   margin-top: 16px;
@@ -276,7 +249,7 @@ footer {
 }
 .cost-details summary {
   cursor: pointer;
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text);
 }
 .cost-details > div {
@@ -285,7 +258,8 @@ footer {
   gap: 12px;
   padding: 9px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 11px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
 }
 .cost-details > div span:nth-child(2) {
   color: var(--text-muted);
@@ -294,7 +268,7 @@ footer {
   text-align: right;
 }
 .cost-note {
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.6;
   color: var(--text-muted);
   margin-top: 14px;
@@ -326,5 +300,4 @@ footer {
 }
 .brief-dialog::backdrop {
   background: var(--backdrop);
-  backdrop-filter: blur(4px);
 }

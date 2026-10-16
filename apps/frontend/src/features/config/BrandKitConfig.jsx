@@ -1,6 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Check, FileText, LoaderCircle, RotateCcw, Save } from 'lucide-react';
-import { api, post } from '../../shared/api/client.js';
+import {
+  AlertTriangle,
+  Check,
+  FileText,
+  LoaderCircle,
+  RotateCcw,
+  Save,
+} from '../../shared/icons.js';
+import { brandKitService } from '../../services/brand-kit.js';
+import Textarea from '../../shared/components/Textarea.jsx';
 
 // The Brand Kit is what the agents read on every request. A store without one cannot run
 // a campaign at all — load_brand refuses before any model is called — so this screen
@@ -16,7 +24,7 @@ export default function BrandKitConfig() {
 
   const load = useCallback(async () => {
     try {
-      const value = await api('/api/brandkit');
+      const value = await brandKitService.get();
       setState(value);
       setDrafts(Object.fromEntries(value.files.map((file) => [file.name, file.content])));
       setError('');
@@ -65,7 +73,6 @@ export default function BrandKitConfig() {
     <>
       <div className="page-title">
         <div>
-          <p className="eyebrow">CONFIGURAÇÕES</p>
           <h1>Brand Kit</h1>
           <p className="muted mt-3">
             É isto que os agentes leem antes de escrever qualquer campanha. Comece pela base e
@@ -76,7 +83,7 @@ export default function BrandKitConfig() {
           className="button"
           type="button"
           disabled={Boolean(busy)}
-          onClick={() => run('seed', () => post('/api/brandkit/seed', {}))}
+          onClick={() => run('seed', brandKitService.seed)}
         >
           {busy === 'seed' ? <LoaderCircle className="spin" size={15} /> : <FileText size={15} />}
           Criar o que falta
@@ -140,7 +147,8 @@ export default function BrandKitConfig() {
                   <label className="sr-only" htmlFor={`kit-${file.name}`}>
                     Conteúdo de {file.title}
                   </label>
-                  <textarea
+                  <Textarea
+                    className="resize-none"
                     id={`kit-${file.name}`}
                     value={drafts[file.name] ?? ''}
                     spellCheck="false"
@@ -152,9 +160,7 @@ export default function BrandKitConfig() {
                       type="button"
                       disabled={Boolean(busy) || !dirty}
                       onClick={() =>
-                        run(file.name, () =>
-                          post('/api/brandkit', { name: file.name, content: drafts[file.name] })
-                        )
+                        run(file.name, () => brandKitService.saveFile(file.name, drafts[file.name]))
                       }
                     >
                       {busy === file.name ? (

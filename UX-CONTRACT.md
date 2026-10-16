@@ -7,13 +7,13 @@ Somente OWNER administra toda a plataforma. DEFAULT e PAID não recebem acesso a
 
 | Capability | Canonical owner | Source of truth | Allowed variants | Verification |
 |---|---|---|---|---|
-| Select/Listbox | select/datalist nativos; CategoryField | catálogo storeCategories.js | popup do sistema operacional | teclado e viewport estreita |
+| Select/Listbox | select/datalist nativos; CategoryField; SearchSelect.jsx para busca/miniaturas | catálogo storeCategories.js + dados da API | nativo ou combobox compartilhado | teclado, estado vazio e viewport estreita |
 | Form | Form.jsx + Textarea.jsx + PasswordInput.jsx, labels/input nativos | contrato da API | criar/editar; validação local e servidor | sucesso, erro e preservação dos valores |
 | Scrollbar | shared/styles/platform.css | shared/styles/tokens.css / DESIGN.md | geometria interna de tabelas e menus | computed style |
 | Toast | status/alert inline junto da operação | resposta da API | sucesso/erro/processamento | live region |
-| CRUD | cliente api/post e routes.js | API + URL | salvar no contexto; criar volta à lista | HTTP e navegador |
+| CRUD | services por domínio + services/http.js; routes.js para URL da tela | API + URL | salvar no contexto; criar volta à lista | testes HTTP, serviços e navegador |
 | Dialog | Modal.jsx | dialog.showModal() | formulário/confirmar | foco, Escape, centralização |
-| Menu | ActionMenu.jsx | portal único por gatilho | direita/esquerda | setas, Escape, colisão |
+| Menu | ActionMenu.jsx + overlayRoot.js | portal no dialog aberto mais próximo ou body | direita/esquerda | setas, Escape, colisão |
 | Categorias | StoreCategoriesModal.jsx | resources/catalog/store-categories.json + API | até três categorias por loja | limite na UI e servidor, persistência e combinação de regras |
 | Biblioteca | Library.jsx | catálogo de mídia da loja | produtos e artes | upload, isolamento, filtro e reutilização |
 
@@ -21,8 +21,9 @@ Somente OWNER administra toda a plataforma. DEFAULT e PAID não recebem acesso a
 
 - `/` e `/home` são a home pública; `/login` recebe senha e os provedores OAuth anunciados pelo servidor.
 - Autenticado entra em `/studio`; URLs dos módulos são definidas por `routes.js`.
-- `/studio/campaings` é a grafia solicitada; `/studio/campaigns` redireciona para ela.
+- `/studio/campaigns` é a URL canônica; `/studio/campaings` é um alias legado.
 - Campanhas selecionadas usam `?run=ID`, preservando reload e Voltar/Avançar.
+- Uma nova página começa no topo; consultas na mesma página, âncoras e Voltar/Avançar preservam o comportamento próprio de rolagem.
 - Visitantes em áreas privadas são redirecionados para `/`. Pessoas sem OWNER em `/admin` voltam a `/home`.
 - Módulo bloqueado redireciona à conta. URLs inválidas voltam à home. A API continua respondendo 401/403.
 - O modo standalone local permanece sem autenticação, conforme ADR 002.

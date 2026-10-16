@@ -1,26 +1,25 @@
-"""Roles and the administration panel.
-
-DEFAULT and PAID gate quota and features inside a store; OWNER gates the platform. The
-tests that matter most here are the negative ones: a paying customer is still not an
-administrator, and losing a role must take effect immediately rather than whenever the
-cookie happens to expire.
-"""
+"""Painel administrativo, métricas e logs."""
 import json
 import threading
 from http.cookies import SimpleCookie
 from urllib.error import HTTPError
 from urllib.request import Request, urlopen
-
 import pytest
-
 from identity_fake import FakeIdentityStore
-from realcenter_marketing.application.identity.errors import AdminError
-from realcenter_marketing.application.identity.model import ROLES
-from realcenter_marketing.application.identity.service import IdentityService
-from realcenter_marketing.bootstrap.platform import Identity
-from realcenter_marketing.infrastructure.identity.rate_limit import MemoryRateLimiter
-from realcenter_marketing.presentation.http.server import make_server
+from studio_ai.application.identity.errors import AdminError
+from studio_ai.application.identity.model import ROLES
+from studio_ai.application.identity.service import IdentityService
+from studio_ai.bootstrap.platform import Identity
+from studio_ai.infrastructure.identity.rate_limit import MemoryRateLimiter
+from studio_ai.presentation.http.server import make_server
+from datetime import datetime, timedelta, timezone
+from types import SimpleNamespace
+from studio_ai.infrastructure.admin_metrics import collect_metrics
+from studio_ai.infrastructure.observability.journal import RunJournal
+from studio_ai.infrastructure.logs import usage_audit, system_activity
 
+
+# ---- admin -------------------------------------------------------------------
 
 class FastHasher:
     def hash(self, password):
@@ -272,3 +271,134 @@ def test_an_unknown_role_is_refused(panel):
 
     with pytest.raises(AdminError):
         service.set_role(comum.id, loja.id, 'root')
+
+
+# ---- admin_metrics -----------------------------------------------------------
+
+def journal(root, name, date, *, assist=False, entries=None, unknown=False):
+    path = root / 'campaigns' / ('brief-assists' if assist else 'runs') / name
+    path.mkdir(parents=True)
+    (path / 'events.jsonl').write_text(json.dumps({'time': date, 'event': 'assist_completed' if assist else 'run_completed'}) + '\n{partial', encoding='utf-8')
+    data = {'text': {'requests': 2, 'input_tokens': 100, 'output_tokens': 30, 'cost_usd': None if unknown else .2},
+            'image': {'count': 1, 'cost_usd': .1}}
+    if entries is not None:
+        data['entries'] = entries
+    (path / 'usage.json').write_text(json.dumps(data), encoding='utf-8')
+    return path
+
+
+def test_periods_use_all_stores_timezone_boundaries_and_unknown_cost(tmp_path):
+    store = FakeIdentityStore()
+    a = store.create_tenant('alpha', 'Alpha')
+    b = store.create_tenant('beta', 'Beta')
+    now = datetime(2026, 9, 19, 12, tzinfo=timezone.utc)
+    store.created_stores[a.id] = now - timedelta(days=1)
+    store.created_stores[b.id] = now - timedelta(days=50)
+    journal(tmp_path / 'alpha', 'run-recent', '2026-09-18T12:00:00Z')
+    journal(tmp_path / 'beta', 'run-month', '2026-09-02T12:00:00Z', unknown=True)
+    # Sep 1 UTC is still August in Brazil.
+    journal(tmp_path / 'beta', 'run-old', '2026-09-01T01:00:00Z', assist=True)
+    report = collect_metrics(store, lambda slug, _: tmp_path / slug, now)
+    week, month, all_time = (report['periods'][p] for p in ('week', 'month', 'all'))
+    assert week['requests'] == 3 and week['new_stores'] == 1
+    assert month['requests'] == 6 and month['unpriced_records'] == 1
+    assert month['known_cost_usd'] == pytest.approx(.4)
+    assert all_time['requests'] == 9 and all_time['new_stores'] == 2
+    assert all_time['active_stores'] == 2 and all_time['brief_assists'] == 1
+    assert len(report['daily']) == 30
+
+
+def test_timestamped_entries_count_later_images_without_double_counting_snapshots(tmp_path):
+    store = FakeIdentityStore()
+    store.create_tenant('alpha', 'Alpha')
+    journal(tmp_path, 'run-old', '2026-08-01T00:00:00Z', entries=[
+        {'time': '2026-09-18T12:00:00Z', 'requests': 1, 'images': 1, 'known_cost_usd': .1}])
+    result = collect_metrics(store, lambda *_: tmp_path, datetime(2026, 9, 19, tzinfo=timezone.utc))['periods']['week']
+    assert result['campaigns'] == 0 and result['images'] == 1 and result['requests'] == 1
+    assert result['known_cost_usd'] == .1 and result['legacy_records'] == 0
+
+
+def test_undated_legacy_usage_only_enters_general_totals(tmp_path):
+    store = FakeIdentityStore()
+    store.create_tenant('alpha', 'Alpha')
+    journal(tmp_path, 'run-undated', None)
+    report = collect_metrics(store, lambda *_: tmp_path)
+    assert report['periods']['week']['requests'] == 0
+    assert report['periods']['all']['undated_records'] == 1
+
+
+def test_resuming_a_legacy_journal_preserves_old_usage_once(tmp_path):
+    directory = journal(tmp_path, 'run-old', '2026-09-01T12:00:00Z')
+    # Use the full historical schema before resuming image generation.
+    old = json.loads((directory / 'usage.json').read_text())
+    old['text']['by_agent'] = {}
+    (directory / 'usage.json').write_text(json.dumps(old))
+    current = RunJournal.resume(directory)
+    current.record_image_usage('unpriced-model')
+    current.record_image_usage('unpriced-model')
+    data = json.loads((directory / 'usage.json').read_text())
+    assert len(data['entries']) == 3
+    assert data['entries'][0]['legacy'] is True
+    assert sum(row['requests'] for row in data['entries']) == 5
+    assert data['entries'][-1]['unpriced_records'] == 1
+
+
+# ---- logs --------------------------------------------------------------------
+
+def test_usage_includes_assists_and_activity_redacts(tmp_path):
+    for folder in ('runs/run-'+'a'*32, 'brief-assists/test'):
+        d=tmp_path/'campaigns'/folder; d.mkdir(parents=True)
+        (d/'usage.json').write_text(json.dumps({'text':{'model':'test','by_agent':{'Director':{'requests':1,'input_tokens':10,'output_tokens':2}}}}))
+        (d/'events.jsonl').write_text(json.dumps({'event':'response_received','time':'2026-09-10','secret':'hidden'})+'\n{partial')
+    result=usage_audit(tmp_path)
+    assert result['input_tokens']==20 and result['output_tokens']==4
+    assert result['record_count']==2
+    assert 'hidden' not in json.dumps(system_activity(tmp_path))
+
+
+def test_snapshot_is_memoised_until_the_run_directory_changes(root):
+    """The frontend polls this every two seconds per tab. Re-reading every events.jsonl
+    each time is what gives way first under load — before campaign execution does."""
+    from studio_ai.infrastructure.persistence import filesystem
+
+    runs = root / 'campaigns' / 'runs' / ('run-' + 'a' * 32)
+    runs.mkdir(parents=True)
+    (runs / 'events.jsonl').write_text('{"event": "run_completed", "time": "2026-09-19T10:00:00"}\n',
+                                       encoding='utf-8')
+
+    reads = {'count': 0}
+    original = filesystem.media_catalog
+
+    def counting(value):
+        reads['count'] += 1
+        return original(value)
+
+    filesystem.media_catalog = counting
+    try:
+        first = filesystem.snapshot(root)
+        for _ in range(5):
+            filesystem.snapshot(root)
+        assert reads['count'] == 1, 'polling repetido não pode reler o disco'
+        assert first[0]['status'] == 'completed'
+
+        # A new run changes the fingerprint, so the next call rebuilds.
+        (root / 'campaigns' / 'runs' / ('run-' + 'b' * 32)).mkdir()
+        filesystem.snapshot(root)
+        assert reads['count'] == 2
+    finally:
+        filesystem.media_catalog = original
+
+
+def test_the_active_run_is_labelled_without_rebuilding(root):
+    """active_id only decides a label, so it must not invalidate the cache."""
+    from studio_ai.infrastructure.persistence import filesystem
+
+    run_id = 'run-' + 'c' * 32
+    directory = root / 'campaigns' / 'runs' / run_id
+    directory.mkdir(parents=True)
+    (directory / 'events.jsonl').write_text('{"event": "run_started"}\n', encoding='utf-8')
+
+    filesystem.snapshot(root)
+    labelled = filesystem.snapshot(root, active_id=run_id)
+    assert labelled[0]['status'] == 'running'
+    assert filesystem.snapshot(root)[0]['status'] == 'interrupted'

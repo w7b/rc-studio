@@ -1,5 +1,6 @@
 import React from 'react';
-import { Download, AlertTriangle } from 'lucide-react';
+import { Download, AlertTriangle } from '../../shared/icons.js';
+import { campaignService } from '../../services/campaigns.js';
 
 const roles = {
   social_media: 'Social Media',
@@ -19,7 +20,11 @@ export default function Diagnostics({ run }) {
           <AlertTriangle size={20} />
           Diagnóstico da execução
         </h2>
-        <a className="button small" href={`/api/runs/${run.id}/files/diagnostics.json`} download>
+        <a
+          className="button small"
+          href={campaignService.fileUrl(run.id, 'diagnostics.json')}
+          download
+        >
           <Download size={15} />
           Baixar diagnóstico JSON
         </a>
@@ -67,7 +72,7 @@ export default function Diagnostics({ run }) {
               <a
                 key={role}
                 className="button small"
-                href={`/api/runs/${run.id}/files/${role}.json`}
+                href={campaignService.fileUrl(run.id, `${role}.json`)}
                 download
               >
                 <Download size={14} />

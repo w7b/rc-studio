@@ -1,13 +1,18 @@
+"""Worker, sobreposição de status e ciclo de vida do agendador."""
 import os
 import threading
 from types import SimpleNamespace
-
 import pytest
-
 from queue_fake import FakeJobQueue
 from script_loader import load_script
-from realcenter_marketing.application.commands import RunRequest
-from realcenter_marketing.bootstrap.registry import TenantRegistry
+from studio_ai.application.commands import RunRequest
+from studio_ai.bootstrap.registry import TenantRegistry
+from studio_ai.infrastructure.persistence.filesystem import _SNAPSHOT_CACHE
+from concurrent.futures import ThreadPoolExecutor
+from studio_ai.bootstrap import registry as module
+
+
+# ---- worker ------------------------------------------------------------------
 
 worker = load_script('worker')
 
@@ -169,3 +174,99 @@ def test_shutdown_finishes_current_job_before_closing_registry(execution, tmp_pa
     assert closed == [worker.DRAIN_SECONDS]
     assert identity_closed == [True]
     assert not heartbeat.exists()
+
+
+# ---- run_status_overlay ------------------------------------------------------
+
+def test_queue_overlay_never_enters_snapshot_cache(root):
+    queue = FakeJobQueue()
+    registry = TenantRegistry(root.parent, queue_for=lambda *args: queue)
+    try:
+        context = registry.context('store', str(root), tenant_id=1)
+        run_id = context.service.start(RunRequest(request='Teste de fila', mode='demo'))
+        state = context.run_state()
+        assert state['busy'] and state['active_id'] == run_id
+        assert state['runs'][0]['status'] == 'queued'
+        assert _SNAPSHOT_CACHE[str(root)][1][0]['status'] == 'interrupted'
+        queue.jobs[0]['status'] = 'running'
+        assert context.run_state()['runs'][0]['status'] == 'running'
+        assert _SNAPSHOT_CACHE[str(root)][1][0]['status'] == 'interrupted'
+        context.service.resume('campaign', run_id, queue.jobs[0]['payload'])
+        queue.jobs[0]['status'] = 'done'
+        state = context.run_state()
+        assert state['runs'][0]['status'] == 'completed'
+        assert not state['busy'] and state['active_id'] is None
+        context.service.scheduler.acquire()
+        try:
+            assert context.run_state()['busy']
+        finally:
+            context.service.scheduler.release()
+    finally:
+        registry.close()
+
+
+def test_context_rebinds_after_session_or_root_change(tmp_path):
+    queue = FakeJobQueue()
+    registry = TenantRegistry(tmp_path, queue_for=lambda *args: queue,
+                              quota_for=lambda tenant_id, role: (tenant_id, role))
+    try:
+        assert registry.context('store').service.queue is None
+        signed_in = registry.context('store', tenant_id=7, role='DEFAULT')
+        assert signed_in.service.queue is queue
+        paid = registry.context('store', tenant_id=7, role='PAID')
+        assert paid.service.quota == (7, 'PAID')
+        moved = registry.context('store', str(tmp_path / 'moved'), tenant_id=7, role='PAID')
+        assert moved.root == (tmp_path / 'moved').resolve()
+        assert moved.service.scheduler is signed_in.service.scheduler
+    finally:
+        registry.close()
+
+
+# ---- registry_scheduler_lifecycle --------------------------------------------
+
+def test_concurrent_first_requests_do_not_close_shared_scheduler(tmp_path, monkeypatch):
+    registry = module.TenantRegistry(tmp_path)
+    original = module.CampaignService
+    barrier = threading.Barrier(2)
+
+    def build(*args, **kwargs):
+        service = original(*args, **kwargs)
+        barrier.wait(timeout=5)
+        return service
+
+    monkeypatch.setattr(module, 'CampaignService', build)
+    try:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = [executor.submit(registry.context, 'store') for _ in range(2)]
+            contexts = [future.result(timeout=10) for future in futures]
+        assert contexts[0] is contexts[1]
+        scheduler = contexts[0].service.scheduler
+        assert scheduler.acquire(), 'An idle store must accept work after concurrent initialization'
+        scheduler.release()
+    finally:
+        registry.close(timeout=1)
+
+
+def test_evicted_store_can_accept_work_when_reopened(tmp_path):
+    registry = module.TenantRegistry(tmp_path, max_hot=1)
+    try:
+        registry.context('first')
+        registry.context('second')
+        context = registry.context('first')
+        assert context.service.scheduler.acquire()
+        context.service.scheduler.release()
+    finally:
+        registry.close(timeout=1)
+
+
+def test_briefing_without_active_run_is_not_evicted(tmp_path):
+    registry = module.TenantRegistry(tmp_path, max_hot=1)
+    first = registry.context('first')
+    assert first.service.scheduler.acquire()
+    try:
+        registry.context('second')
+        assert registry.context('first') is first
+        assert first.service.busy
+    finally:
+        first.service.scheduler.release()
+        registry.close(timeout=1)
